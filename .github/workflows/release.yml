@@ -1,0 +1,36 @@
+name: CI
+
+on:
+ release:
+   types: [created]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  releases-matrix:
+    needs: ["main_ci"]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Release Go Binary
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goarch: arm64
+            goos: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+      - uses: wangyoucao577/go-release-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          project_path: ./cmd/github-next-semantic-version
+          binary_name: github-next-semantic-version
+          compress_assets: "OFF"
