@@ -74,6 +74,22 @@ clean: _cmd_clean ## Clean the repo
 _cmd_clean:
 	rm -f $(CMDS)
 
+.PHONY: no-dirty
+no-dirty: ## Check if the repo is dirty
+	@if test -n "$$(git status --porcelain)"; then \
+		echo "The repository is dirty"; \
+		exit 1; \
+	fi
+
+integration: $(CMDS) ## Run integration tests
+	N=`./cmd/github-next-semantic-version/github-next-semantic-version --log-level=DEBUG`; \
+	LINES=`echo $$N |wc -l`; \
+	if test "$${LINES}" != "1"; then \
+		echo "Expected 1 line, got $${LINES}"; \
+		exit 1; \
+	fi; \
+	echo "$$N" |grep '^v'
+	
 .PHONY: help
 help::
 	@# See https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
