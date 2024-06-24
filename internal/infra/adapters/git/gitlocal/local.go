@@ -1,4 +1,4 @@
-package local
+package gitlocal
 
 import (
 	"bufio"
@@ -20,23 +20,23 @@ const (
 	tag    = "~~~"
 )
 
-var _ git.Port = &adapter{}
+var _ git.Port = &Adapter{}
 
 type AdapterOptions struct {
 	LocalGitPath string
 }
 
-type adapter struct {
+type Adapter struct {
 	opts AdapterOptions
 }
 
-func NewAdapter(opts AdapterOptions) *adapter {
-	return &adapter{
+func NewAdapter(opts AdapterOptions) *Adapter {
+	return &Adapter{
 		opts: opts,
 	}
 }
 
-func (r *adapter) decode(output string) ([]*git.Tag, error) {
+func (r *Adapter) decode(output string) ([]*git.Tag, error) {
 	res := []*git.Tag{}
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {
@@ -65,7 +65,7 @@ func (r *adapter) decode(output string) ([]*git.Tag, error) {
 	return res, nil
 }
 
-func (r *adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
+func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
 	if r.opts.LocalGitPath != "" && r.opts.LocalGitPath != "." {
 		err := os.Chdir(r.opts.LocalGitPath)
 		if err != nil {
@@ -74,8 +74,9 @@ func (r *adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
 	}
 	format := fmt.Sprintf("%s(decorate:prefix=%s,suffix=%s,tag=%s,separator=)%s", "%", prefix, suffix, tag, "%cI")
 	cmd := exec.Command("git", "log", "--tags", "--simplify-by-decoration", fmt.Sprintf(`--pretty=%s`, format), branch)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
+		slog.Default().Debug("git output: " + string(output))
 		return nil, err
 	}
 	tags, err := r.decode(string(output))

@@ -70,17 +70,19 @@ func Main() {
 				Name:     "repo-owner",
 				Required: true,
 				Usage:    "repository owner (organization)",
+				EnvVars:  []string{"REPO_OWNER"},
 			},
 			&cli.StringFlag{
 				Name:     "repo-name",
 				Required: true,
 				Usage:    "repository name (without owner/organization part)",
+				EnvVars:  []string{"REPO_NAME"},
 			},
 			&cli.StringFlag{
-				Name:     "branch",
-				Required: true,
-				Value:    "main",
-				Usage:    "Branch to filter on (probably the main branch)",
+				Name:    "branch",
+				Value:   "main",
+				Usage:   "Branch to filter on (probably the main branch)",
+				EnvVars: []string{"BRANCH_NAME"},
 			},
 			&cli.StringFlag{
 				Name:    "major-labels",
