@@ -1,40 +1,74 @@
 name: CI
 
 on:
-    push:
-        branches:
-            - master
-    pull_request:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
-    main_ci:
-        runs-on: ubuntu-22.04
-        permissions:
-            contents: read
-            pull-requests: read
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-go@v4
-              with:
-                go-version: "1.21"
-            - name: Run build
-              run: |
-                make build
-            - name: Run lint
-              run: |
-                make FIX=0 lint
-            - name: Run test
-              run: |
-                make test
-            - name: Run git checks
-              run: |
-                make no-dirty
-            - name: Run integration tests
-              run: |
-                make integration
-            - name: Run clean
-              run: |
-                make clean
-            - name: Run git checks (after clean)
-              run: |
-                make no-dirty
+  main_ci:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      pull-requests: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # we need this because fetch-tags=true and because of a GHA bug: https://github.com/actions/checkout/issues/1471
+          fetch-tags: true
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+      - name: Run build
+        run: |
+          make build
+      - name: Run lint
+        run: |
+          make FIX=0 lint
+      - name: Run test
+        run: |
+          make test
+      - name: Run git checks
+        run: |
+          make no-dirty
+      - name: Run clean
+        run: |
+          make clean
+      - name: Run integration tests
+        env:
+          REPO_OWNER: fabien-marty
+          REPO_NAME: github-next-semantic-version
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+        run: |
+          git checkout "${BRANCH_NAME}"
+          make integration-test
+      - name: Run git checks (after clean)
+        run: |
+          make no-dirty
+  releases-matrix:
+    needs: ["main_ci"]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Release Go Binary
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goarch: arm64
+            goos: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+      - uses: wangyoucao577/go-release-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          project_path: ./cmd/github-next-semantic-version
+          binary_name: github-next-semantic-version
+          compress_assets: "OFF"

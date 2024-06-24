@@ -20,5 +20,6 @@
 # Go workspace file
 go.work
 go.work.sum
-coverage.out
-cmd/github-next-semantic-version/github-next-semantic-version
+/coverage.out
+/cmd/github-next-semantic-version/github-next-semantic-version
+/tmp

@@ -74,8 +74,9 @@ func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
 	}
 	format := fmt.Sprintf("%s(decorate:prefix=%s,suffix=%s,tag=%s,separator=)%s", "%", prefix, suffix, tag, "%cI")
 	cmd := exec.Command("git", "log", "--tags", "--simplify-by-decoration", fmt.Sprintf(`--pretty=%s`, format), branch)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
+		slog.Default().Debug("git output: " + string(output))
 		return nil, err
 	}
 	tags, err := r.decode(string(output))

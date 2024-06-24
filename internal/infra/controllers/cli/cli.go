@@ -79,9 +79,10 @@ func Main() {
 				EnvVars:  []string{"REPO_NAME"},
 			},
 			&cli.StringFlag{
-				Name:  "branch",
-				Value: "main",
-				Usage: "Branch to filter on (probably the main branch)",
+				Name:    "branch",
+				Value:   "main",
+				Usage:   "Branch to filter on (probably the main branch)",
+				EnvVars: []string{"BRANCH_NAME"},
 			},
 			&cli.StringFlag{
 				Name:    "major-labels",

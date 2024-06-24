@@ -77,11 +77,14 @@ _cmd_clean:
 .PHONY: no-dirty
 no-dirty: ## Check if the repo is dirty
 	@if test -n "$$(git status --porcelain)"; then \
-		echo "The repository is dirty"; \
+		echo "ERROR: the repository is dirty"; \
+		git status; \
+		git diff; \
 		exit 1; \
 	fi
 
-integration: $(CMDS) ## Run integration tests
+.PHONY: integration-test
+integration-test: $(CMDS) ## Run integration tests
 	N=`./cmd/github-next-semantic-version/github-next-semantic-version --log-level=DEBUG`; \
 	LINES=`echo $$N |wc -l`; \
 	if test "$${LINES}" != "1"; then \
