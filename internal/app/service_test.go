@@ -97,8 +97,9 @@ func TestGetNextVersionMinor(t *testing.T) {
 		},
 	}
 	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	version, err := service.GetNextVersion("main", true)
+	old, version, err := service.GetNextVersion("main", true)
 	assert.Nil(t, err)
+	assert.Equal(t, "v1.0.0", old)
 	assert.Equal(t, "v1.1.0", version)
 }
 
@@ -132,8 +133,9 @@ func TestGetNextVersionMajor(t *testing.T) {
 		},
 	}
 	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	version, err := service.GetNextVersion("main", true)
+	old, version, err := service.GetNextVersion("main", true)
 	assert.Nil(t, err)
+	assert.Equal(t, "1.0.0", old)
 	assert.Equal(t, "2.0.0", version)
 }
 
@@ -147,7 +149,8 @@ func TestGetNextVersionPatch(t *testing.T) {
 		prs: []repo.PullRequest{},
 	}
 	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	version, err := service.GetNextVersion("main", true)
+	old, version, err := service.GetNextVersion("main", true)
 	assert.Nil(t, err)
+	assert.Equal(t, "1.0.0", old)
 	assert.Equal(t, "1.0.1", version)
 }

@@ -26,28 +26,33 @@ func action(cCtx *cli.Context) error {
 	repoOwner := cCtx.String("repo-owner")
 	repoName := cCtx.String("repo-name")
 	branch := cCtx.String("branch")
+	localGitPath := cCtx.Args().Get(0)
 	repoGithubAdapter := repogithub.NewAdapter(repoOwner, repoName, repogithub.AdapterOptions{Token: cCtx.String("github-token")})
 	gitLocalAdapter := gitlocal.NewAdapter(gitlocal.AdapterOptions{
-		LocalGitPath: cCtx.String("git-repository-local-path"),
+		LocalGitPath: localGitPath,
 	})
 	appConfig := app.Config{
-		PullRequestMajorLabels: strings.Split(cCtx.String("major-labels"), ","),
-		PullRequestMinorLabels: strings.Split(cCtx.String("minor-labels"), ","),
+		PullRequestMajorLabels:  strings.Split(cCtx.String("major-labels"), ","),
+		PullRequestMinorLabels:  strings.Split(cCtx.String("minor-labels"), ","),
+		PullRequestIgnoreLabels: strings.Split(cCtx.String("ignore-labels"), ","),
+		DontIncrementIfNoPR:     cCtx.Bool("dont-increment-if-no-pr"),
+		MinimalDelayInSeconds:   cCtx.Int("minimal-delay-in-seconds"),
 	}
 	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
-	res, err := service.GetNextVersion(branch, !cCtx.Bool("consider-also-non-merged-prs"))
+	oldVersion, newVersion, err := service.GetNextVersion(branch, !cCtx.Bool("consider-also-non-merged-prs"))
 	if err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
-	fmt.Println(res)
+	fmt.Printf("%s => %s\n", oldVersion, newVersion)
 	return nil
 }
 
 func Main() {
 	app := &cli.App{
-		Name:   "github-next-semantic-version",
-		Usage:  "Compute the next semantic version with merged PRs and corresponding labels",
-		Action: action,
+		Name:      "github-next-semantic-version",
+		Usage:     "Compute the next semantic version with merged PRs and corresponding labels",
+		Action:    action,
+		ArgsUsage: "[localGitRepositoryPath]",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "log-level",
@@ -97,14 +102,26 @@ func Main() {
 				EnvVars: []string{"MINOR_LABELS"},
 			},
 			&cli.StringFlag{
-				Name:  "git-repository-local-path",
-				Value: ".",
-				Usage: "Git repository local path",
+				Name:    "ignore-labels",
+				Value:   "Type: Hidden",
+				Usage:   "Coma separated list of PR labels to consider as ignored PRs",
+				EnvVars: []string{"MINOR_LABELS"},
+			},
+			&cli.BoolFlag{
+				Name:    "dont-increment-if-no-pr",
+				Value:   false,
+				Usage:   "Don't increment the version if no PR is found (or if only ignored PRs found)",
+				EnvVars: []string{"IGNORE_LABELS"},
 			},
 			&cli.BoolFlag{
 				Name:  "consider-also-non-merged-prs",
 				Value: false,
 				Usage: "Consider also non-merged PRs",
+			},
+			&cli.IntFlag{
+				Name:  "minimal-delay-in-seconds",
+				Value: 5,
+				Usage: "Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR)",
 			},
 		},
 	}
