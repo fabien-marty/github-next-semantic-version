@@ -29,6 +29,9 @@ jobs:
       - name: Run test
         run: |
           make test
+      - name: Run Doc
+        run: |
+          make doc
       - name: Run git checks
         run: |
           make no-dirty

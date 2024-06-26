@@ -70,6 +70,10 @@ clean: _cmd_clean ## Clean the repo
 	rm -Rf build
 	rm -f cover.html
 
+.PHONY: clean
+doc: $(CMDS) ## Generate documentation
+	docker run -t -v $$(pwd):/workdir --user=$$(id -u) ghcr.io/fabien-marty/jinja-tree:latest /workdir
+
 .PHONY: _cmd_clean
 _cmd_clean:
 	rm -f $(CMDS)
