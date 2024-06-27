@@ -7,17 +7,11 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/relvacode/iso8601"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
-)
-
-const (
-	prefix = "@@@PREFIX@@@"
-	suffix = "@@@SUFFIX@@@"
-	sep    = ""
-	tag    = "~~~"
 )
 
 var _ git.Port = &Adapter{}
@@ -36,52 +30,110 @@ func NewAdapter(opts AdapterOptions) *Adapter {
 	}
 }
 
-func (r *Adapter) decode(output string) ([]*git.Tag, error) {
-	res := []*git.Tag{}
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.HasPrefix(line, prefix+tag) {
-			continue
-		}
-		if !strings.Contains(line, suffix) {
-			continue
-		}
-		tmp := strings.Split(line, suffix)
-		if len(tmp) != 2 {
-			continue
-		}
-		tagDate, err := iso8601.ParseString(tmp[1])
-		if err != nil {
-			slog.Debug("bad iso8601 date parsing => ignoring", slog.String("date", tmp[1]), slog.String("err", err.Error()))
-			continue
-		}
-		tmp = strings.Split(tmp[0], tag)
-		for i := 1; i < len(tmp); i++ {
-			tagName := tmp[i]
-			res = append(res, git.NewTag(tagName, tagDate))
-		}
+func lastLine(output string) string {
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) == 0 {
+		return ""
 	}
-	return res, nil
+	return lines[len(lines)-1]
 }
 
-func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
+func extractGHRepoFromRemoteUrl(remoteUrl string) (owner string, repo string) {
+	if strings.HasPrefix(remoteUrl, "git@github.com:") && strings.HasSuffix(remoteUrl, ".git") {
+		url := strings.TrimSuffix(strings.TrimPrefix(remoteUrl, "git@github.com:"), ".git")
+		tmp := strings.Split(url, "/")
+		if len(tmp) != 2 {
+			return "", ""
+		}
+		return tmp[0], tmp[1]
+	}
+	if strings.HasPrefix(remoteUrl, "https://") && strings.HasSuffix(remoteUrl, ".git") && strings.Contains(remoteUrl, "github.com/") {
+		url := strings.TrimSuffix(strings.TrimPrefix(remoteUrl, "https://"), ".git")
+		tmp := strings.Split(url, "/")
+		if len(tmp) != 3 {
+			return "", ""
+		}
+		return tmp[1], tmp[2]
+	}
+	return "", ""
+}
+
+func (r *Adapter) cwdOrDie() {
 	if r.opts.LocalGitPath != "" && r.opts.LocalGitPath != "." {
 		err := os.Chdir(r.opts.LocalGitPath)
 		if err != nil {
-			return nil, fmt.Errorf("can't change the directory to %s: %v", r.opts.LocalGitPath, err)
+			slog.Error("can't change the directory to %s: %v", r.opts.LocalGitPath, err)
+			os.Exit(1)
+		}
+		slog.Debug("working directory changed", slog.String("newWorkingDirectory", r.opts.LocalGitPath))
+	}
+}
+
+func (r *Adapter) executeCmdOrDie(logger *slog.Logger, cmd *exec.Cmd) string {
+	logger.Debug(fmt.Sprintf("executing command: %s...", cmd.String()))
+	output, err := cmd.Output()
+	if err != nil {
+		eerr, ok := err.(*exec.ExitError)
+		if ok {
+			logger.Error(fmt.Sprintf("bad exit code for command: %s", cmd.String()), slog.Int("code", eerr.ExitCode()), slog.String("stdout", string(output)), slog.String("stderr", string(eerr.Stderr)))
+			os.Exit(1)
+		} else {
+			logger.Error(fmt.Sprintf("can't execute command: %s", cmd.String()), slog.String("err", err.Error()))
+			os.Exit(2)
 		}
 	}
-	format := fmt.Sprintf("%s(decorate:prefix=%s,suffix=%s,tag=%s,separator=)%s", "%", prefix, suffix, tag, "%cI")
-	cmd := exec.Command("git", "log", "--tags", "--simplify-by-decoration", fmt.Sprintf(`--pretty=%s`, format), branch)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		slog.Default().Debug("git output: " + string(output))
-		return nil, err
+	return string(output)
+}
+
+func (r *Adapter) getTagNamesOrDie(branch string) []string {
+	logger := slog.Default().With("branch", branch, "gitOperation", "getTagNames")
+	args := []string{"tag"}
+	if branch != "" {
+		args = append(args, "--merged", "refs/heads/"+branch)
 	}
-	tags, err := r.decode(string(output))
-	if err != nil {
-		return nil, fmt.Errorf("can't get the list of tags from git: %v", err)
+	cmd := exec.Command("git", args...)
+	output := r.executeCmdOrDie(logger, cmd)
+	res := []string{}
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	for scanner.Scan() {
+		res = append(res, strings.TrimSpace(scanner.Text()))
 	}
-	return tags, nil
+	return res
+}
+
+func (r *Adapter) getTagDateOrDie(tagName string) time.Time {
+	logger := slog.Default().With("tagName", tagName, "gitOperation", "getTagDate")
+	cmd := exec.Command("git", "show", "-s", "--format=%cI", "refs/tags/"+tagName)
+	output := strings.TrimSpace(r.executeCmdOrDie(logger, cmd))
+	if len(strings.TrimSpace(output)) == 0 {
+		logger.Error("can't get the date of the tag: empty")
+		os.Exit(1)
+	}
+	tagDate, err := iso8601.ParseString(lastLine(output))
+	if err != nil {
+		logger.Error("can't parse the date of the tag", slog.String("err", err.Error()))
+		os.Exit(1)
+	}
+	return tagDate
+}
+
+func (r *Adapter) GuessGHRepo() (owner string, repo string) {
+	logger := slog.Default().With("gitOperation", "guessRepoOwner")
+	r.cwdOrDie()
+	cmd := exec.Command("git", "remote", "get-url", "origin")
+	output := r.executeCmdOrDie(logger, cmd)
+	url := lastLine(output)
+	return extractGHRepoFromRemoteUrl(url)
+}
+
+func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
+	res := []*git.Tag{}
+	r.cwdOrDie()
+	tagNames := r.getTagNamesOrDie(branch)
+	for _, tagName := range tagNames {
+		tagDate := r.getTagDateOrDie(tagName)
+		tag := git.NewTag(tagName, tagDate)
+		res = append(res, tag)
+	}
+	return res, nil
 }

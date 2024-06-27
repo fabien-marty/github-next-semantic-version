@@ -14,10 +14,11 @@ import (
 var ErrNoTags = errors.New("no existing tag found")
 
 const (
+	nothing             = "nothing"
 	major               = "major"
 	minor               = "minor"
 	patch               = "patch"
-	defaultFirstVersion = "v0.0.1"
+	defaultFirstVersion = "v0.0.0"
 )
 
 // Service is the main application service
@@ -75,27 +76,31 @@ func (s *Service) getLatestSemanticNonPrereleaseTag(branch string) (*git.Tag, er
 }
 
 // GetNextVersion returns the next semantic version based on the branch and the PRs merged since the last tag + PRs still opened (if onlyMerged is false)
-func (s *Service) GetNextVersion(branch string, onlyMerged bool) (string, error) {
+func (s *Service) GetNextVersion(branch string, onlyMerged bool) (oldVersion string, newVersion string, err error) {
 	logger := s.logger
 	latestTag, err := s.getLatestSemanticNonPrereleaseTag(branch)
 	if err == ErrNoTags {
-		logger.Warn("no tag found => let's return the default first version")
-		return defaultFirstVersion, nil
+		logger.Warn("no tag found => let's use the default first version")
+		latestTag = git.NewTag(defaultFirstVersion, time.Now())
 	} else if err != nil {
-		return "", err
+		return "", "", err
 	}
-	logger.Info(fmt.Sprintf("latest semantic (non-prerelease) tag found: %s (date: %s)", latestTag.Name, latestTag.Time.Format(time.RFC3339)))
+	logger.Debug(fmt.Sprintf("latest semantic (non-prerelease) tag found: %s (date: %s)", latestTag.Name, latestTag.Time.Format(time.RFC3339)))
 	prs, err := s.repoAdapter.GetPullRequestsSince(branch, latestTag.Time, onlyMerged)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	logger.Debug(fmt.Sprintf("%d PRs to consider", len(prs)))
-	increment := patch
+	increment := nothing
 	pullRequestConfig := s.config.PullRequestConfig()
 	for _, pr := range prs {
 		logger := logger.With(slog.Int("number", pr.Number), slog.String("title", pr.Title), slog.Bool("merged", pr.MergedAt != nil))
 		if pr.MergedAt != nil {
 			logger = logger.With(slog.String("mergedAt", pr.MergedAt.Format(time.RFC3339)))
+			if latestTag.Time.Add(time.Second * time.Duration(s.config.MinimalDelayInSeconds)).After(*pr.MergedAt) {
+				logger.Debug("PR merged too soon, lightweight tag probably used => ignoring this PR")
+				continue
+			}
 		}
 		if pr.IsMajor(pullRequestConfig) {
 			logger.Debug("major PR found => break")
@@ -104,21 +109,32 @@ func (s *Service) GetNextVersion(branch string, onlyMerged bool) (string, error)
 		} else if pr.IsMinor(pullRequestConfig) {
 			logger.Debug("minor PR found")
 			increment = minor
-			continue
+		} else if pr.IsIgnored(pullRequestConfig) {
+			logger.Debug("ignored PR found")
+		} else {
+			logger.Debug("patch PR found")
+			increment = patch
 		}
-		logger.Debug("patch PR found")
 	}
 	switch increment {
+	case nothing:
+		if s.config.DontIncrementIfNoPR {
+			logger.Debug("we found no PR (or they are all ignored) and DontIncrementIfNoPr is true => let's not increment the version")
+			return latestTag.Name, latestTag.Name, nil
+		} else {
+			logger.Debug("we found no PR (or they are all ignored) and DontIncrementIfNoPr is false => let's increment the patch number")
+			return latestTag.Name, latestTag.NewName(latestTag.Semver.IncPatch()), nil
+		}
 	case major:
-		logger.Info("we found at least one MAJOR PR => let's increment the major number")
-		return latestTag.NewName(latestTag.Semver.IncMajor()), nil
+		logger.Debug("we found at least one MAJOR PR => let's increment the major number")
+		return latestTag.Name, latestTag.NewName(latestTag.Semver.IncMajor()), nil
 	case minor:
-		logger.Info("we found at least one MINOR PR => let's increment the minor number")
-		return latestTag.NewName(latestTag.Semver.IncMinor()), nil
+		logger.Debug("we found at least one MINOR PR => let's increment the minor number")
+		return latestTag.Name, latestTag.NewName(latestTag.Semver.IncMinor()), nil
 	case patch:
-		logger.Info("we didn't find MAJOR or MINOR PRs => let's increment the patch number")
-		return latestTag.NewName(latestTag.Semver.IncPatch()), nil
+		logger.Debug("we found some PRs but we didn't find MAJOR or MINOR PRs => let's increment the patch number")
+		return latestTag.Name, latestTag.NewName(latestTag.Semver.IncPatch()), nil
 	default:
-		return "", fmt.Errorf("unknown increment %s", increment)
+		panic(fmt.Sprintf("unknown increment value: %s", increment))
 	}
 }
