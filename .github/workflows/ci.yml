@@ -39,12 +39,7 @@ jobs:
         run: |
           make clean
       - name: Run integration tests
-        env:
-          REPO_OWNER: fabien-marty
-          REPO_NAME: github-next-semantic-version
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
         run: |
-          git checkout "${BRANCH_NAME}"
           make integration-test
       - name: Run git checks (after clean)
         run: |

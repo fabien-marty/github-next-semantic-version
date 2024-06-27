@@ -85,7 +85,7 @@ func (s *Service) GetNextVersion(branch string, onlyMerged bool) (oldVersion str
 	} else if err != nil {
 		return "", "", err
 	}
-	logger.Info(fmt.Sprintf("latest semantic (non-prerelease) tag found: %s (date: %s)", latestTag.Name, latestTag.Time.Format(time.RFC3339)))
+	logger.Debug(fmt.Sprintf("latest semantic (non-prerelease) tag found: %s (date: %s)", latestTag.Name, latestTag.Time.Format(time.RFC3339)))
 	prs, err := s.repoAdapter.GetPullRequestsSince(branch, latestTag.Time, onlyMerged)
 	if err != nil {
 		return "", "", err
@@ -119,20 +119,20 @@ func (s *Service) GetNextVersion(branch string, onlyMerged bool) (oldVersion str
 	switch increment {
 	case nothing:
 		if s.config.DontIncrementIfNoPR {
-			logger.Info("we found no PR (or they are all ignored) and DontIncrementIfNoPr is true => let's not increment the version")
+			logger.Debug("we found no PR (or they are all ignored) and DontIncrementIfNoPr is true => let's not increment the version")
 			return latestTag.Name, latestTag.Name, nil
 		} else {
-			logger.Info("we found no PR (or they are all ignored) and DontIncrementIfNoPr is false => let's increment the patch number")
+			logger.Debug("we found no PR (or they are all ignored) and DontIncrementIfNoPr is false => let's increment the patch number")
 			return latestTag.Name, latestTag.NewName(latestTag.Semver.IncPatch()), nil
 		}
 	case major:
-		logger.Info("we found at least one MAJOR PR => let's increment the major number")
+		logger.Debug("we found at least one MAJOR PR => let's increment the major number")
 		return latestTag.Name, latestTag.NewName(latestTag.Semver.IncMajor()), nil
 	case minor:
-		logger.Info("we found at least one MINOR PR => let's increment the minor number")
+		logger.Debug("we found at least one MINOR PR => let's increment the minor number")
 		return latestTag.Name, latestTag.NewName(latestTag.Semver.IncMinor()), nil
 	case patch:
-		logger.Info("we found some PRs but we didn't find MAJOR or MINOR PRs => let's increment the patch number")
+		logger.Debug("we found some PRs but we didn't find MAJOR or MINOR PRs => let's increment the patch number")
 		return latestTag.Name, latestTag.NewName(latestTag.Semver.IncPatch()), nil
 	default:
 		panic(fmt.Sprintf("unknown increment value: %s", increment))

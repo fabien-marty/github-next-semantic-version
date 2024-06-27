@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app"
+	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
 	"github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/git/gitlocal"
 	"github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/repo/repogithub"
 	"github.com/fabien-marty/slog-helpers/pkg/slogc"
@@ -23,14 +24,24 @@ func setDefaultLogger(cCtx *cli.Context) {
 
 func action(cCtx *cli.Context) error {
 	setDefaultLogger(cCtx)
-	repoOwner := cCtx.String("repo-owner")
-	repoName := cCtx.String("repo-name")
-	branch := cCtx.String("branch")
 	localGitPath := cCtx.Args().Get(0)
-	repoGithubAdapter := repogithub.NewAdapter(repoOwner, repoName, repogithub.AdapterOptions{Token: cCtx.String("github-token")})
-	gitLocalAdapter := gitlocal.NewAdapter(gitlocal.AdapterOptions{
+	if localGitPath == "" {
+		return cli.Exit("You have to set LOCAL_GIT_REPO_PATH argument (use . for the currenty dir)", 1)
+	}
+	var gitLocalAdapter git.Port = gitlocal.NewAdapter(gitlocal.AdapterOptions{
 		LocalGitPath: localGitPath,
 	})
+	repoOwner := cCtx.String("repo-owner")
+	repoName := cCtx.String("repo-name")
+	if repoOwner == "" || repoName == "" {
+		repoOwner, repoName = gitLocalAdapter.GuessGHRepo()
+		if repoOwner == "" || repoName == "" {
+			return cli.Exit("Can't guess the repository owner and name => please provide them as CLI flags", 1)
+		}
+	}
+	slog.Debug(fmt.Sprintf("Repository owner: %s, repository name: %s", repoOwner, repoName))
+	branch := cCtx.String("branch")
+	repoGithubAdapter := repogithub.NewAdapter(repoOwner, repoName, repogithub.AdapterOptions{Token: cCtx.String("github-token")})
 	appConfig := app.Config{
 		PullRequestMajorLabels:  strings.Split(cCtx.String("major-labels"), ","),
 		PullRequestMinorLabels:  strings.Split(cCtx.String("minor-labels"), ","),
@@ -52,7 +63,7 @@ func Main() {
 		Name:      "github-next-semantic-version",
 		Usage:     "Compute the next semantic version with merged PRs and corresponding labels",
 		Action:    action,
-		ArgsUsage: "[localGitRepositoryPath]",
+		ArgsUsage: "LOCAL_GIT_REPO_PATH",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "log-level",
@@ -72,46 +83,43 @@ func Main() {
 				EnvVars: []string{"GITHUB_TOKEN"},
 			},
 			&cli.StringFlag{
-				Name:     "repo-owner",
-				Required: true,
-				Usage:    "repository owner (organization)",
-				EnvVars:  []string{"REPO_OWNER"},
+				Name:    "repo-owner",
+				Usage:   "repository owner (organization); if not set, we are going to try to guess",
+				EnvVars: []string{"GNSV_REPO_OWNER"},
 			},
 			&cli.StringFlag{
-				Name:     "repo-name",
-				Required: true,
-				Usage:    "repository name (without owner/organization part)",
-				EnvVars:  []string{"REPO_NAME"},
+				Name:    "repo-name",
+				Usage:   "repository name (without owner/organization part); if not set, we are going to try to guess",
+				EnvVars: []string{"GNSV_REPO_NAME"},
 			},
 			&cli.StringFlag{
 				Name:    "branch",
-				Value:   "main",
-				Usage:   "Branch to filter on (probably the main branch)",
-				EnvVars: []string{"BRANCH_NAME"},
+				Value:   "",
+				Usage:   "Branch to filter on",
+				EnvVars: []string{"GNSV_BRANCH_NAME"},
 			},
 			&cli.StringFlag{
 				Name:    "major-labels",
 				Value:   "major,breaking,Type: Major",
 				Usage:   "Coma separated list of PR labels to consider as major",
-				EnvVars: []string{"MAJOR_LABELS"},
+				EnvVars: []string{"GNSV_MAJOR_LABELS"},
 			},
 			&cli.StringFlag{
 				Name:    "minor-labels",
 				Value:   "feature,Type: Feature,Type: Minor",
 				Usage:   "Coma separated list of PR labels to consider as minor",
-				EnvVars: []string{"MINOR_LABELS"},
+				EnvVars: []string{"GNSV_MINOR_LABELS"},
 			},
 			&cli.StringFlag{
 				Name:    "ignore-labels",
 				Value:   "Type: Hidden",
 				Usage:   "Coma separated list of PR labels to consider as ignored PRs",
-				EnvVars: []string{"MINOR_LABELS"},
+				EnvVars: []string{"GNSV_HIDDEN_LABELS"},
 			},
 			&cli.BoolFlag{
-				Name:    "dont-increment-if-no-pr",
-				Value:   false,
-				Usage:   "Don't increment the version if no PR is found (or if only ignored PRs found)",
-				EnvVars: []string{"IGNORE_LABELS"},
+				Name:  "dont-increment-if-no-pr",
+				Value: false,
+				Usage: "Don't increment the version if no PR is found (or if only ignored PRs found)",
 			},
 			&cli.BoolFlag{
 				Name:  "consider-also-non-merged-prs",
@@ -126,7 +134,7 @@ func Main() {
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "bad CLI arguments: %s", slog.String("err", err.Error()))
+		fmt.Fprintf(os.Stderr, "bad CLI arguments: %s\n", slog.String("err", err.Error()))
 		os.Exit(1)
 	}
 }

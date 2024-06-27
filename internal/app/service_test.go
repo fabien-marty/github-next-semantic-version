@@ -17,6 +17,10 @@ func (d *gitDummyAdapter) GetContainedTags(branch string) ([]*git.Tag, error) {
 	return d.tags, nil
 }
 
+func (d *gitDummyAdapter) GuessGHRepo() (owner string, repo string) {
+	return "foo", "bar"
+}
+
 type repoDummyAdapter struct {
 	prs []repo.PullRequest
 }

@@ -11,7 +11,7 @@ default: help
 build: $(CMDS) ## Build Go binaries
 
 cmd/github-next-semantic-version/github-next-semantic-version: $(shell find cmd/github-next-semantic-version internal -type f -name '*.go')
-	cd `dirname $@` && go build $(BUILDARGS) -o `basename $@` *.go
+	cd `dirname $@` && export CGO_ENABLED=0 && go build $(BUILDARGS) -o `basename $@` *.go
 
 .PHONY: gofmt
 gofmt:
@@ -89,7 +89,7 @@ no-dirty: ## Check if the repo is dirty
 
 .PHONY: integration-test
 integration-test: $(CMDS) ## Run integration tests
-	N=`./cmd/github-next-semantic-version/github-next-semantic-version --log-level=DEBUG`; \
+	N=`./cmd/github-next-semantic-version/github-next-semantic-version --log-level=DEBUG .`; \
 	LINES=`echo $$N |wc -l`; \
 	if test "$${LINES}" != "1"; then \
 		echo "Expected 1 line, got $${LINES}"; \
