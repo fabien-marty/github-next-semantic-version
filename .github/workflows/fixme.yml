@@ -19,6 +19,10 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: "1.21"
+      - name: Prepare build
+        run: |
+          make build
+          cd docker && make build-prepare
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
