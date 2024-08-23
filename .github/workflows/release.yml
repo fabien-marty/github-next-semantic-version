@@ -1,4 +1,4 @@
-name: CI
+name: Release
 
 on:
  release:
@@ -9,7 +9,7 @@ permissions:
   packages: write
 
 jobs:
-  releases-matrix:
+  release_go_binary:
     name: Release Go Binary
     runs-on: ubuntu-22.04
     strategy:

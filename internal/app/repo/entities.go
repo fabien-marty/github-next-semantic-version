@@ -4,8 +4,9 @@ import "time"
 
 // PullRequestConfig holds labels to identify major and minor pull requests.
 type PullRequestConfig struct {
-	MajorLabels []string
-	MinorLabels []string
+	MajorLabels   []string
+	MinorLabels   []string
+	IgnoredLabels []string
 }
 
 // PullRequest represents a pull request.
@@ -42,10 +43,23 @@ func (pr *PullRequest) IsMinor(config PullRequestConfig) bool {
 	return false
 }
 
+// IsIgnored returns true if the pull request is ignored.
+// A pull request is considered ignored if it has at least one of the ignored labels.
+func (pr *PullRequest) IsIgnored(config PullRequestConfig) bool {
+	for _, label := range pr.Labels {
+		for _, ignoredLabel := range config.IgnoredLabels {
+			if label == ignoredLabel {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // IsPatch returns true if the pull request is a patch one.
 // A pull request is considered patch if it is neither major nor minor.
 func (pr *PullRequest) IsPatch(config PullRequestConfig) bool {
-	return !pr.IsMajor(config) && !pr.IsMinor(config)
+	return !pr.IsMajor(config) && !pr.IsMinor(config) && !pr.IsIgnored(config)
 }
 
 // IsMerged returns true if the pull request is merged.
