@@ -28,7 +28,7 @@ jobs:
           make FIX=0 lint
       - name: Run test
         run: |
-          make test
+          make test-unit
       - name: Run Doc
         run: |
           make doc
