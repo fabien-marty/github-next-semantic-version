@@ -102,15 +102,15 @@ func (s *Service) GetNextVersion(branch string, onlyMerged bool) (oldVersion str
 				continue
 			}
 		}
-		if pr.IsMajor(pullRequestConfig) {
+		if pr.IsIgnored(pullRequestConfig) {
+			logger.Debug("ignored PR found")
+		} else if pr.IsMajor(pullRequestConfig) {
 			logger.Debug("major PR found => break")
 			increment = major
 			break
 		} else if pr.IsMinor(pullRequestConfig) {
 			logger.Debug("minor PR found")
 			increment = minor
-		} else if pr.IsIgnored(pullRequestConfig) {
-			logger.Debug("ignored PR found")
 		} else {
 			logger.Debug("patch PR found")
 			increment = patch
