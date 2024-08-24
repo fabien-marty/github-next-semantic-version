@@ -138,9 +138,10 @@ func Main() {
 				EnvVars: []string{"GNSV_DONT_INCREMENT_IF_NO_PR"},
 			},
 			&cli.BoolFlag{
-				Name:  "consider-also-non-merged-prs",
-				Value: false,
-				Usage: "Consider also non-merged PRs",
+				Name:    "consider-also-non-merged-prs",
+				Value:   false,
+				Usage:   "Consider also non-merged PRs",
+				EnvVars: []string{"GNSV_CONSIDER_ALSO_NON_MERGED_PRS"},
 			},
 			&cli.IntFlag{
 				Name:  "minimal-delay-in-seconds",
