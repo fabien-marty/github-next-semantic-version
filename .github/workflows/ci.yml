@@ -34,7 +34,7 @@ jobs:
           make doc
       - name: Run integration tests
         run: |
-          make integration-test
+          make test-integration
       - name: Run git checks
         run: |
           make no-dirty
