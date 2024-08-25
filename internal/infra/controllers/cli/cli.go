@@ -36,7 +36,7 @@ func action(cCtx *cli.Context) error {
 	setDefaultLogger(cCtx)
 	localGitPath := cCtx.Args().Get(0)
 	if localGitPath == "" {
-		return cli.Exit("You have to set LOCAL_GIT_REPO_PATH argument (use . for the currenty dir)", 1)
+		return cli.Exit("You have to set LOCAL_GIT_REPO_PATH argument (use . for the currently dir)", 1)
 	}
 	var gitLocalAdapter git.Port = gitlocal.NewAdapter(gitlocal.AdapterOptions{
 		LocalGitPath: localGitPath,
