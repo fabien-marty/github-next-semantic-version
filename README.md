@@ -102,14 +102,13 @@ Dev commands are implemented inside a `Makefile` with following targets:
 
 ```console
 $ make help
-[36m_unit_test                    [0m Execute all unit tests
-[36mbuild                         [0m Build Go binaries
-[36mclean                         [0m Clean the repo
-[36mdoc                           [0m Generate documentation
-[36mhtml-coverage                 [0m Build html coverage
-[36mintegration-test              [0m Run integration tests
-[36mlint                          [0m Lint the code (also fix the code if FIX=1, default)
-[36mno-dirty                      [0m Check if the repo is dirty
-[36mtest                          [0m Execute all tests 
+build                          Build Go binaries
+clean                          Clean the repo
+doc                            Generate documentation
+lint                           Lint the code (also fix the code if FIX=1, default)
+no-dirty                       Check if the repo is dirty
+test-integration               Run integration tests
+test-unit                      Execute all unit tests
+test                           Execute all tests 
 
 ```

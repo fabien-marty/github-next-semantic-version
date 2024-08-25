@@ -1,5 +1,5 @@
 FIX=1
-COMMON_TEST_OPTIONS=-race -cover -covermode=atomic
+COMMON_TEST_OPTIONS=-race
 CMDS=cmd/github-next-semantic-version/github-next-semantic-version
 BUILDARGS=
 
@@ -31,27 +31,12 @@ golangcilint: tmp/bin/golangci-lint
 govet:
 	go vet ./...
 
-.PHONY: _unit_test
-_unit_test: ## Execute all unit tests
-	@rm -Rf covdatafiles/unit
-	@mkdir -p covdatafiles/unit 
-	go test $(COMMON_TEST_OPTIONS) ./... -args -test.gocoverdir=$$(pwd)/covdatafiles/unit
-
-.PHONY: _prepare_coverage
-_prepare_coverage:
-	@mkdir -p covdatafiles/unit
-
-.PHONY: _merge_coverage
-_merge_coverage:
-	go tool covdata textfmt -i=./covdatafiles/unit -o coverage.out
-	rm -Rf covdatafiles
+.PHONY: test-unit
+test-unit: ## Execute all unit tests
+	go test $(COMMON_TEST_OPTIONS) ./...
 
 .PHONY: test
-test: _prepare_coverage _unit_test _merge_coverage ## Execute all tests 
-
-.PHONY: html-coverage
-html-coverage: test ## Build html coverage
-	go tool cover -html coverage.out -o cover.html
+test: test-unit test-integration ## Execute all tests 
 
 .PHONY: lint
 lint: govet gofmt golangcilint ## Lint the code (also fix the code if FIX=1, default)
@@ -62,11 +47,8 @@ tmp/bin/golangci-lint:
 
 .PHONY: clean
 clean: _cmd_clean ## Clean the repo
-	rm -f coverage.out
-	rm -Rf covdatafiles
 	rm -Rf tmp
 	rm -Rf build
-	rm -f cover.html
 
 .PHONY: clean
 doc: $(CMDS) ## Generate documentation
@@ -85,8 +67,8 @@ no-dirty: ## Check if the repo is dirty
 		exit 1; \
 	fi
 
-.PHONY: integration-test
-integration-test: $(CMDS) ## Run integration tests
+.PHONY: test-integration
+test-integration: $(CMDS) ## Run integration tests
 	N=`./cmd/github-next-semantic-version/github-next-semantic-version --log-level=DEBUG .`; \
 	LINES=`echo $$N |wc -l`; \
 	if test "$${LINES}" != "1"; then \

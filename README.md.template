@@ -79,5 +79,5 @@ Dev commands are implemented inside a `Makefile` with following targets:
 
 ```console
 $ make help
-{{ "make help"|shell() }}
+{{ "make help |sed 's/\x1b\[[0-9;]*m//g'"|shell() }}
 ```

@@ -28,13 +28,13 @@ jobs:
           make FIX=0 lint
       - name: Run test
         run: |
-          make test
+          make test-unit
       - name: Run Doc
         run: |
           make doc
       - name: Run integration tests
         run: |
-          make integration-test
+          make test-integration
       - name: Run git checks
         run: |
           make no-dirty
