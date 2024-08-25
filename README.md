@@ -1,9 +1,11 @@
 # github-next-semantic-version
 
+[![](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/fabien-marty/github-next-semantic-version)
+
 ## What is it?
 
 `github-next-semantic-version` is a little CLI binary (written in golang) to
-**guess the next [semantic version](https://semver.org/)** from:
+**guesses the next [semantic version](https://semver.org/)** from:
 
 - existing **git tags** *(read from a locally cloned git repository)*
 - and recently merged **pull-requests labels** *(read from the GitHub API)*
