@@ -1,11 +1,14 @@
 package app
 
 import (
+	"fmt"
+	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
+	"github.com/fabien-marty/slog-helpers/pkg/slogc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,6 +33,11 @@ func (d *repoDummyAdapter) GetPullRequestsSince(base string, t time.Time, onlyMe
 }
 
 func NewDefaultConfig() Config {
+	logger := slogc.GetLogger(
+		slogc.WithLevel(slog.LevelDebug),
+		slogc.WithLogFormat("text-human"),
+	)
+	slog.SetDefault(logger)
 	return Config{
 		PullRequestMajorLabels: []string{"major1", "major2"},
 		PullRequestMinorLabels: []string{"minor1", "minor2"},
@@ -96,6 +104,37 @@ func TestGetNextVersionMinor(t *testing.T) {
 				Number:   2,
 				Title:    "PR2",
 				Labels:   []string{"foo", "minor1"},
+				MergedAt: &now,
+			},
+		},
+	}
+	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
+	old, version, err := service.GetNextVersion("main", true)
+	assert.Nil(t, err)
+	assert.Equal(t, "v1.0.0", old)
+	assert.Equal(t, "v1.1.0", version)
+}
+
+func TestGetNextVersionMinor2(t *testing.T) {
+	fmt.Println("FOOOOOOOOOOOOOOOOOOOOOOO")
+	gitAdapter := &gitDummyAdapter{
+		tags: []*git.Tag{
+			git.NewTag("v1.0.0", time.Now()),
+		},
+	}
+	now := time.Now()
+	repoAdapter := &repoDummyAdapter{
+		prs: []repo.PullRequest{
+			{
+				Number:   1,
+				Title:    "PR1",
+				Labels:   []string{"minor1", "bar"},
+				MergedAt: &now,
+			},
+			{
+				Number:   2,
+				Title:    "PR2",
+				Labels:   []string{"foo"},
 				MergedAt: &now,
 			},
 		},

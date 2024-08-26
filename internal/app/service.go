@@ -110,10 +110,14 @@ func (s *Service) GetNextVersion(branch string, onlyMerged bool) (oldVersion str
 			break
 		} else if pr.IsMinor(pullRequestConfig) {
 			logger.Debug("minor PR found")
-			increment = minor
+			if increment == nothing || increment == patch {
+				increment = minor
+			}
 		} else {
 			logger.Debug("patch PR found")
-			increment = patch
+			if increment == nothing {
+				increment = patch
+			}
 		}
 	}
 	switch increment {
