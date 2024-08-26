@@ -75,6 +75,12 @@ func (s *Service) getLatestSemanticNonPrereleaseTag(branch string) (*git.Tag, er
 	return res, nil
 }
 
+func (s *Service) removeRevertedPRs(prs []repo.PullRequest) []repo.PullRequest {
+	// FIXME: implement this
+	var res []repo.PullRequest = prs
+	return res
+}
+
 // GetNextVersion returns the next semantic version based on the branch and the PRs merged since the last tag + PRs still opened (if onlyMerged is false)
 func (s *Service) GetNextVersion(branch string, onlyMerged bool) (oldVersion string, newVersion string, err error) {
 	logger := s.logger
@@ -93,6 +99,7 @@ func (s *Service) GetNextVersion(branch string, onlyMerged bool) (oldVersion str
 	logger.Debug(fmt.Sprintf("%d PRs to consider", len(prs)))
 	increment := nothing
 	pullRequestConfig := s.config.PullRequestConfig()
+	prs = s.removeRevertedPRs(prs)
 	for _, pr := range prs {
 		logger := logger.With(slog.Int("number", pr.Number), slog.String("title", pr.Title), slog.Bool("merged", pr.MergedAt != nil))
 		if pr.MergedAt != nil {
