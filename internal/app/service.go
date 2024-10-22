@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"time"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
@@ -39,11 +40,34 @@ func NewService(config Config, repoAdapter repo.Port, gitAdapter git.Port) *Serv
 	}
 }
 
+// getContainedTags returns the list of tags contained by the branch
+// (the list from the adapter is optionally filtered by the tag-regex configuration)
+func (s *Service) getContainedTags(branch string) ([]*git.Tag, error) {
+	res, err := s.gitAdapter.GetContainedTags(branch)
+	if err != nil {
+		return nil, err
+	}
+	if s.config.TagRegex == "" {
+		return res, nil
+	}
+	var filtered []*git.Tag
+	regex, err := regexp.Compile(s.config.TagRegex)
+	if err != nil {
+		return res, fmt.Errorf("can't compile the regex %s: %w", s.config.TagRegex, err)
+	}
+	for _, tag := range res {
+		if regex.MatchString(tag.Name) {
+			filtered = append(filtered, tag)
+		}
+	}
+	return filtered, nil
+}
+
 // getLatestSemanticNonPrereleaseTag returns the latest semantic (non-prerelease) tag contained by the branch
 // If no tag is found, it returns ErrNoTags
 func (s *Service) getLatestSemanticNonPrereleaseTag(branch string) (*git.Tag, error) {
 	logger := s.logger.With(slog.String("branch", branch))
-	tags, err := s.gitAdapter.GetContainedTags(branch)
+	tags, err := s.getContainedTags(branch)
 	if err != nil {
 		return nil, fmt.Errorf("can't get the list of tags contained by %s: %w", branch, err)
 	}

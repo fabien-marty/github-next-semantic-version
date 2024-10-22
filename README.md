@@ -82,6 +82,7 @@ GLOBAL OPTIONS:
    --dont-increment-if-no-pr         Don't increment the version if no PR is found (or if only ignored PRs found) (default: false) [$GNSV_DONT_INCREMENT_IF_NO_PR]
    --consider-also-non-merged-prs    Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
    --minimal-delay-in-seconds value  Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
+   --tag-regex value                 Regex to match tags (if empty string (default) => no filtering)
    --help, -h                        show help
 
 ```
