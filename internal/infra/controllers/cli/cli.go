@@ -63,6 +63,7 @@ func action(cCtx *cli.Context) error {
 		PullRequestIgnoreLabels: strings.Split(cCtx.String("ignore-labels"), ","),
 		DontIncrementIfNoPR:     cCtx.Bool("dont-increment-if-no-pr"),
 		MinimalDelayInSeconds:   cCtx.Int("minimal-delay-in-seconds"),
+		TagRegex:                cCtx.String("tag-regex"),
 	}
 	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
 	oldVersion, newVersion, err := service.GetNextVersion(branch, !cCtx.Bool("consider-also-non-merged-prs"))
@@ -147,6 +148,11 @@ func Main() {
 				Name:  "minimal-delay-in-seconds",
 				Value: 5,
 				Usage: "Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR)",
+			},
+			&cli.StringFlag{
+				Name:  "tag-regex",
+				Value: "",
+				Usage: "Regex to match tags (if empty string (default) => no filtering)",
 			},
 		},
 	}

@@ -58,6 +58,23 @@ func TestGetLatestSemanticTag(t *testing.T) {
 	assert.Equal(t, "v1.0.1", tag.Name)
 }
 
+func TestGetContainedTags(t *testing.T) {
+	repoAdapter := &repoDummyAdapter{}
+	gitAdapter := &gitDummyAdapter{
+		tags: []*git.Tag{
+			git.NewTag("v1.0.0", time.Now()),
+			git.NewTag("v2.0.1", time.Now().Add(1*time.Hour)),
+		},
+	}
+	config := NewDefaultConfig()
+	config.TagRegex = "^v1.*"
+	service := NewService(config, repoAdapter, gitAdapter)
+	tags, err := service.getContainedTags("main")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(tags))
+	assert.Equal(t, "v1.0.0", tags[0].Name)
+}
+
 func TestGetLatestSemanticTagWithoutSemantic(t *testing.T) {
 	repoAdapter := &repoDummyAdapter{}
 	gitAdapter := &gitDummyAdapter{
