@@ -150,9 +150,10 @@ func Main() {
 				Usage: "Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR)",
 			},
 			&cli.StringFlag{
-				Name:  "tag-regex",
-				Value: "",
-				Usage: "Regex to match tags (if empty string (default) => no filtering)",
+				Name:    "tag-regex",
+				Value:   "",
+				Usage:   "Regex to match tags (if empty string (default) => no filtering)",
+				EnvVars: []string{"GNSV_TAG_REGEX"},
 			},
 		},
 	}
