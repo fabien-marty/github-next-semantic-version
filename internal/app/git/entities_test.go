@@ -31,6 +31,18 @@ func TestNewTagWithPrefix(t *testing.T) {
 	assert.Equal(t, uint64(0), tag.Semver.Patch())
 }
 
+func TestNewTagWithPrefix2(t *testing.T) {
+	n := "foo/bar/v1.0.0"
+	tim := time.Now()
+	tag := NewTag(n, tim)
+	assert.Equal(t, n, tag.Name)
+	assert.Equal(t, tim, tag.Time)
+	assert.NotNil(t, tag.Semver)
+	assert.Equal(t, uint64(1), tag.Semver.Major())
+	assert.Equal(t, uint64(0), tag.Semver.Minor())
+	assert.Equal(t, uint64(0), tag.Semver.Patch())
+}
+
 func TestNewTagWithNonSemantic(t *testing.T) {
 	n := "foo"
 	tim := time.Now()

@@ -15,10 +15,16 @@ type Tag struct {
 }
 
 // NewTag creates a new Tag instance with the given name and date.
-// It also parses the name to extract the semantic version of the tag.
+// It also parses the name to extract the semantic version of the tag:
+// if the tag name has a prefix "v", the prefix will be removed before parsing the version,
+// if the tag name is in the form foo/v1.2.3, the prefix part ("foo/") will be removed before parsing
 // If the name is not in the expected format, the Semver field of the returned Tag will be nil.
 func NewTag(name string, date time.Time) *Tag {
 	nameWithoutPrefix := strings.TrimPrefix(name, "v")
+	if strings.Contains(nameWithoutPrefix, "/") {
+		tmp := strings.Split(nameWithoutPrefix, "/")
+		nameWithoutPrefix = tmp[len(tmp)-1]
+	}
 	version, err := semver.NewVersion(nameWithoutPrefix)
 	if err != nil {
 		version = nil
