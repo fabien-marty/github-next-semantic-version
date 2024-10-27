@@ -33,6 +33,14 @@ $ # v1.10.1 is the next version
 >
 > *(of course, you can define your own labels to configure the logic)*
 
+## Features
+
+- support full semver specification (basic `1.2.3` but also `1.0.0-beta.2`, `0.1.9-post.24_a5256f1`...)
+- can filter tags with regex (see `--tag-regex` option)
+- support prefixed tags (example: `v1.2.3` but also `foo/bar/v1.2.3`...) when parsing the semantic version
+- configure your own PR labels for major and minor increments
+- ... (see "CLI reference" in this document)
+
 ## Non-features
 
 - "commit message parsing": there are plenty of tools to do that, here, we want to rely only on merged PR labels
