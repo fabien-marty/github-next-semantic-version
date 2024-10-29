@@ -10,29 +10,10 @@ import (
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
 	gitlocal "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/git/local"
 	repogithub "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/repo/github"
-	"github.com/fabien-marty/slog-helpers/pkg/slogc"
 	"github.com/urfave/cli/v2"
 )
 
-func setDefaultLogger(cCtx *cli.Context) {
-	logger := slogc.GetLogger(
-		slogc.WithLevel(slogc.GetLogLevelFromString(cCtx.String("log-level"))),
-		slogc.WithLogFormat(slogc.GetLogFormatFromString(cCtx.String("log-format"))),
-	)
-	slog.SetDefault(logger)
-}
-
-func guessGHRepoFromEnv() (owner string, repo string) {
-	ghOwner := os.Getenv("GITHUB_REPOSITORY_OWNER")
-	ghRepository := os.Getenv("GITHUB_REPOSITORY")
-	if ghOwner != "" && ghRepository != "" {
-		// we are in a GitHub Actions environment
-		return ghOwner, ghRepository[len(ghOwner)+1:]
-	}
-	return "", ""
-}
-
-func action(cCtx *cli.Context) error {
+func action2(cCtx *cli.Context) error {
 	setDefaultLogger(cCtx)
 	localGitPath := cCtx.Args().Get(0)
 	if localGitPath == "" {
@@ -66,19 +47,19 @@ func action(cCtx *cli.Context) error {
 		TagRegex:                cCtx.String("tag-regex"),
 	}
 	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
-	oldVersion, newVersion, _, err := service.GetNextVersion(branch, !cCtx.Bool("consider-also-non-merged-prs"))
+	err := service.CreateNextRelease(branch, cCtx.Bool("release-draft"), cCtx.String("release-body-template"))
 	if err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
-	fmt.Printf("%s => %s\n", oldVersion, newVersion)
+	fmt.Printf("OK")
 	return nil
 }
 
-func Main() {
+func Main2() {
 	app := &cli.App{
 		Name:      "github-next-semantic-version",
 		Usage:     "Compute the next semantic version with merged PRs and corresponding labels",
-		Action:    action,
+		Action:    action2,
 		ArgsUsage: "LOCAL_GIT_REPO_PATH",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -138,12 +119,6 @@ func Main() {
 				Usage:   "Don't increment the version if no PR is found (or if only ignored PRs found)",
 				EnvVars: []string{"GNSV_DONT_INCREMENT_IF_NO_PR"},
 			},
-			&cli.BoolFlag{
-				Name:    "consider-also-non-merged-prs",
-				Value:   false,
-				Usage:   "Consider also non-merged PRs",
-				EnvVars: []string{"GNSV_CONSIDER_ALSO_NON_MERGED_PRS"},
-			},
 			&cli.IntFlag{
 				Name:  "minimal-delay-in-seconds",
 				Value: 5,
@@ -154,6 +129,18 @@ func Main() {
 				Value:   "",
 				Usage:   "Regex to match tags (if empty string (default) => no filtering)",
 				EnvVars: []string{"GNSV_TAG_REGEX"},
+			},
+			&cli.BoolFlag{
+				Name:    "release-draft",
+				Value:   false,
+				Usage:   "if set, the release is created in draft mode",
+				EnvVars: []string{"GNSV_RELEASE_DRAFT"},
+			},
+			&cli.StringFlag{
+				Name:    "release-body-template",
+				Value:   "- {{.Title}} (#{{.Number}})\n",
+				Usage:   "golang template to generate the release body",
+				EnvVars: []string{"GNSV_RELEASE_BODY_TEMPLATE"},
 			},
 		},
 	}
