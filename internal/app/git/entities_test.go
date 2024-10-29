@@ -17,7 +17,6 @@ func TestNewTag(t *testing.T) {
 	assert.Equal(t, uint64(1), tag.Semver.Major())
 	assert.Equal(t, uint64(0), tag.Semver.Minor())
 	assert.Equal(t, uint64(0), tag.Semver.Patch())
-	assert.Equal(t, "", tag.Prefix)
 }
 
 func TestNewTagWithPrefix(t *testing.T) {
@@ -30,7 +29,6 @@ func TestNewTagWithPrefix(t *testing.T) {
 	assert.Equal(t, uint64(1), tag.Semver.Major())
 	assert.Equal(t, uint64(0), tag.Semver.Minor())
 	assert.Equal(t, uint64(0), tag.Semver.Patch())
-	assert.Equal(t, "v", tag.Prefix)
 }
 
 func TestNewTagWithPrefix2(t *testing.T) {
@@ -43,7 +41,6 @@ func TestNewTagWithPrefix2(t *testing.T) {
 	assert.Equal(t, uint64(1), tag.Semver.Major())
 	assert.Equal(t, uint64(0), tag.Semver.Minor())
 	assert.Equal(t, uint64(0), tag.Semver.Patch())
-	assert.Equal(t, "foo/bar/v", tag.Prefix)
 }
 
 func TestNewTagWithNonSemantic(t *testing.T) {

@@ -66,7 +66,7 @@ func action(cCtx *cli.Context) error {
 		TagRegex:                cCtx.String("tag-regex"),
 	}
 	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
-	oldVersion, newVersion, _, err := service.GetNextVersion(branch, !cCtx.Bool("consider-also-non-merged-prs"))
+	oldVersion, newVersion, err := service.GetNextVersion(branch, !cCtx.Bool("consider-also-non-merged-prs"))
 	if err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
