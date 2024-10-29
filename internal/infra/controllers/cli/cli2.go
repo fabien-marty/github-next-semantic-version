@@ -47,7 +47,7 @@ func action2(cCtx *cli.Context) error {
 		TagRegex:                cCtx.String("tag-regex"),
 	}
 	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
-	err := service.CreateNextRelease(branch, cCtx.Bool("release-draft"), cCtx.String("release-body-template"))
+	err := service.CreateNextRelease(branch, false, cCtx.Bool("release-draft"), cCtx.String("release-body-template"))
 	if err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
