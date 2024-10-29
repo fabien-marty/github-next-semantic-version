@@ -8,5 +8,4 @@ type Port interface {
 	// If onlyMerged is true, only the merged pull requests since the given date are returned.
 	// If onlyMerged is false, merged pull requests since the given date are returned + (still) open pull requests.
 	GetPullRequestsSince(base string, t time.Time, onlyMerged bool) ([]PullRequest, error)
-	CreateRelease(base string, tagName string, body string, draft bool) error
 }
