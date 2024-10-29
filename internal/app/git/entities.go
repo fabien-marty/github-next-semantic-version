@@ -12,6 +12,7 @@ type Tag struct {
 	Name   string          // tag name (without modification)
 	Time   time.Time       // commit time of the tag
 	Semver *semver.Version // semver version read from tag name (nil if the tag name is not in the expected format)
+	Prefix string          // Prefix read before the semver version
 }
 
 // NewTag creates a new Tag instance with the given name and date.
@@ -20,10 +21,19 @@ type Tag struct {
 // if the tag name is in the form foo/v1.2.3, the prefix part ("foo/") will be removed before parsing
 // If the name is not in the expected format, the Semver field of the returned Tag will be nil.
 func NewTag(name string, date time.Time) *Tag {
-	nameWithoutPrefix := strings.TrimPrefix(name, "v")
+	if name == "" {
+		return nil
+	}
+	prefix := ""
+	nameWithoutPrefix := name
 	if strings.Contains(nameWithoutPrefix, "/") {
 		tmp := strings.Split(nameWithoutPrefix, "/")
 		nameWithoutPrefix = tmp[len(tmp)-1]
+		prefix = strings.Join(tmp[:len(tmp)-1], "/") + "/"
+	}
+	if nameWithoutPrefix[0] == 'v' {
+		prefix += "v"
+		nameWithoutPrefix = strings.TrimPrefix(nameWithoutPrefix, "v")
 	}
 	version, err := semver.NewVersion(nameWithoutPrefix)
 	if err != nil {
@@ -33,6 +43,7 @@ func NewTag(name string, date time.Time) *Tag {
 		Name:   name,
 		Time:   date,
 		Semver: version,
+		Prefix: prefix,
 	}
 }
 
@@ -52,11 +63,8 @@ func (t1 *Tag) LessThan(t2 *Tag) bool {
 }
 
 // NewName returns the new name for the tag based on the provided new version.
-// If the current tag name has a prefix "v", the new name will also have the same prefix.
+// If the current tag name has a prefix ("v"...), the new name will also have the same prefix.
 // Otherwise, the new name will not have any prefix.
 func (t *Tag) NewName(newVersion semver.Version) string {
-	if strings.HasPrefix(t.Name, "v") {
-		return "v" + newVersion.String()
-	}
-	return newVersion.String()
+	return t.Prefix + newVersion.String()
 }

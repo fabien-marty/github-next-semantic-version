@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # we need this because fetch-tags=true and because of a GHA bug: https://github.com/actions/checkout/issues/1471
+          fetch-tags: true
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+      - name: Run build
+        run: |
+          make build
+      - name: Run
+        run: |
+          ./cmd/github-create-next-semantic-release/github-create-next-semantic-release --log-level=DEBUG --release-draft .
