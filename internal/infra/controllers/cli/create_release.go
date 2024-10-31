@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -57,10 +58,9 @@ func createReleaseAction(cCtx *cli.Context) error {
 	newTag, err := service.CreateNextRelease(branch, !cCtx.Bool("release-force"), cCtx.Bool("release-draft"), releaseBodyTemplate)
 	if err != nil {
 		if err == app.ErrNoRelease {
-			fmt.Printf("ERROR: no need to create a release => use --release-force if you want to force a version bump and a new release\n")
-			return nil
+			return cli.Exit(errors.New("no need to create a release => use --release-force if you want to force a version bump and a new release"), 2)
 		}
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), 1)
 	}
 	fmt.Println(newTag)
 	return nil
