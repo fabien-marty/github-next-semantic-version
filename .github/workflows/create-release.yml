@@ -49,7 +49,7 @@ jobs:
             OPTIONS="${OPTIONS} --release-draft"
           fi
           if test "${{ github.event.inputs.force }}" == "yes"; then
-            OPTIONS="${OPTIONS} --dont-increment-if-no-pr"
+            OPTIONS="${OPTIONS} --release-force"
           fi
           echo "OPTIONS=${OPTIONS}"
           TAG=`./cmd/github-create-next-semantic-release/github-create-next-semantic-release --log-level=DEBUG ${OPTIONS} .`
