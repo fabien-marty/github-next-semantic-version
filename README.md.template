@@ -33,6 +33,9 @@ $ # v1.10.1 is the next version
 >
 > *(of course, you can define your own labels to configure the logic)*
 
+We also provide another CLI binary: `github-create-next-semantic-release` to use previous rules but to automatically create a GitHub release
+with the guessed version and the corresponding release notes (made from merged PRs and a configurable template).
+
 ## Features
 
 - support full semver specification (basic `1.2.3` but also `1.0.0-beta.2`, `0.1.9-post.24_a5256f1`...)
@@ -40,6 +43,7 @@ $ # v1.10.1 is the next version
 - support prefixed tags (example: `v1.2.3` but also `foo/bar/v1.2.3`...) when parsing the semantic version
 - configure your own PR labels for major and minor increments
 - ... (see "CLI reference" in this document)
+- addon binary to automatically create GitHub releases with the guessed version and corresponding release notes
 
 ## Non-features
 
@@ -65,11 +69,29 @@ We provide compiled binaries for various architecture in the [release page](http
 
 ## CLI reference
 
+<details open>
+
+<summary>CLI reference of `github-next-semantic-version`</summary>
+
 ```console
 $ github-next-semantic-version --help
 
 {{ "./cmd/github-next-semantic-version/github-next-semantic-version --help"|shell() }}
 ```
+
+</details>
+
+<details>
+
+<summary>CLI reference of `github-create-next-semantic-release`</summary>
+
+```console
+$ github-create-next-semantic-release --help
+
+{{ "./cmd/github-create-next-semantic-release/github-create-next-semantic-release --help"|shell() }}
+```
+
+</details>
 
 ## DEV
 
