@@ -57,12 +57,12 @@ func createReleaseAction(cCtx *cli.Context) error {
 	newTag, err := service.CreateNextRelease(branch, !cCtx.Bool("release-force"), cCtx.Bool("release-draft"), releaseBodyTemplate)
 	if err != nil {
 		if err == app.ErrNoRelease {
-			fmt.Printf("No need to create a release => use --release-force if you want to force a version bump and a new release\n")
+			fmt.Printf("ERROR: no need to create a release => use --release-force if you want to force a version bump and a new release\n")
 			return nil
 		}
 		return cli.Exit(err.Error(), 2)
 	}
-	fmt.Printf("Release created for tag: %s\n", newTag)
+	fmt.Println(newTag)
 	return nil
 }
 
