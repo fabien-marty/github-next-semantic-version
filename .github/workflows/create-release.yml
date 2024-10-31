@@ -51,3 +51,6 @@ jobs:
           ./cmd/github-create-next-semantic-release/github-create-next-semantic-release --log-level=DEBUG ${OPTIONS} .
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Trigger the release workflow
+        run: |
+          gh workflow run release.yml
