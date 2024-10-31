@@ -61,6 +61,10 @@ jobs:
     needs: release
     name: Release Go Binary
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: read
     strategy:
       matrix:
         goos: [linux, windows, darwin]
