@@ -23,9 +23,10 @@ on:
 jobs:
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
+      packages: write
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +39,7 @@ jobs:
       - name: Run build
         run: |
           make build
-      - name: Run
+      - name: Create release
         run: |
           OPTIONS=""
           if test "${{ github.event.inputs.draft }}" == "yes"; then
@@ -48,9 +49,34 @@ jobs:
             OPTIONS="${OPTIONS} --dont-increment-if-no-pr"
           fi
           echo "OPTIONS=${OPTIONS}"
-          ./cmd/github-create-next-semantic-release/github-create-next-semantic-release --log-level=DEBUG ${OPTIONS} .
+          TAG=`./cmd/github-create-next-semantic-release/github-create-next-semantic-release --log-level=DEBUG ${OPTIONS} .`
+          echo "TAG=${TAG}"
+          echo "tag=${TAG}" >>"$GITHUB_OUTPUT"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Trigger the release workflow
-        run: |
-          gh workflow run release.yml
+  release_go_binary:
+    needs: release
+    name: Release Go Binary
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goarch: arm64
+            goos: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+      - uses: wangyoucao577/go-release-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          project_path: ./cmd/github-next-semantic-version
+          binary_name: github-next-semantic-version
+          compress_assets: "OFF"
+          pre_command: export CGO_ENABLED=0
+          release_tag: ${{ needs.release.outputs.tag }}
