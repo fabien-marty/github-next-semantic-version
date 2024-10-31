@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	cli.NextVersionMain()
+	cli.CreateReleaseMain()
 }

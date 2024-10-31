@@ -1,6 +1,6 @@
 FIX=1
 COMMON_TEST_OPTIONS=-race
-CMDS=cmd/github-next-semantic-version/github-next-semantic-version
+CMDS=cmd/github-next-semantic-version/github-next-semantic-version cmd/github-create-next-semantic-release/github-create-next-semantic-release
 BUILDARGS=
 
 default: help
@@ -9,6 +9,9 @@ default: help
 build: $(CMDS) ## Build Go binaries
 
 cmd/github-next-semantic-version/github-next-semantic-version: $(shell find cmd/github-next-semantic-version internal -type f -name '*.go')
+	cd `dirname $@` && export CGO_ENABLED=0 && go build $(BUILDARGS) -o `basename $@` *.go
+
+cmd/github-create-next-semantic-release/github-create-next-semantic-release: $(shell find cmd/github-create-next-semantic-release internal -type f -name '*.go')
 	cd `dirname $@` && export CGO_ENABLED=0 && go build $(BUILDARGS) -o `basename $@` *.go
 
 .PHONY: gofmt

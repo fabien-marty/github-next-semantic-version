@@ -117,3 +117,21 @@ func (r *Adapter) GetPullRequestsSince(base string, t time.Time, onlyMerged bool
 	}
 	return append(opened, merged...), nil
 }
+
+func (r *Adapter) CreateRelease(base string, tagName string, body string, draft bool) error {
+	makeLatestAsString := "true"
+	prerelease := false
+	_, _, err := r.client.Repositories.CreateRelease(context.Background(), r.owner, r.repo, &gh.RepositoryRelease{
+		TagName:         &tagName,
+		TargetCommitish: &base,
+		Name:            &tagName,
+		Body:            &body,
+		Draft:           &draft,
+		Prerelease:      &prerelease,
+		MakeLatest:      &makeLatestAsString,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}

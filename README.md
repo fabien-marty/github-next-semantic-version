@@ -33,6 +33,9 @@ $ # v1.10.1 is the next version
 >
 > *(of course, you can define your own labels to configure the logic)*
 
+We also provide another CLI binary: `github-create-next-semantic-release` to use previous rules but to automatically create a GitHub release
+with the guessed version and the corresponding release notes (made from merged PRs and a configurable template).
+
 ## Features
 
 - support full semver specification (basic `1.2.3` but also `1.0.0-beta.2`, `0.1.9-post.24_a5256f1`...)
@@ -40,6 +43,7 @@ $ # v1.10.1 is the next version
 - support prefixed tags (example: `v1.2.3` but also `foo/bar/v1.2.3`...) when parsing the semantic version
 - configure your own PR labels for major and minor increments
 - ... (see "CLI reference" in this document)
+- addon binary to automatically create GitHub releases with the guessed version and corresponding release notes
 
 ## Non-features
 
@@ -65,6 +69,10 @@ We provide compiled binaries for various architecture in the [release page](http
 
 ## CLI reference
 
+<details open>
+
+<summary>CLI reference of `github-next-semantic-version`</summary>
+
 ```console
 $ github-next-semantic-version --help
 
@@ -87,13 +95,54 @@ GLOBAL OPTIONS:
    --major-labels value              Coma separated list of PR labels to consider as major (default: "major,breaking,Type: Major") [$GNSV_MAJOR_LABELS]
    --minor-labels value              Coma separated list of PR labels to consider as minor (default: "feature,Type: Feature,Type: Minor") [$GNSV_MINOR_LABELS]
    --ignore-labels value             Coma separated list of PR labels to consider as ignored PRs (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
-   --dont-increment-if-no-pr         Don't increment the version if no PR is found (or if only ignored PRs found) (default: false) [$GNSV_DONT_INCREMENT_IF_NO_PR]
    --consider-also-non-merged-prs    Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
    --minimal-delay-in-seconds value  Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
    --tag-regex value                 Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
+   --dont-increment-if-no-pr         Don't increment the version if no PR is found (or if only ignored PRs found) (default: false) [$GNSV_DONT_INCREMENT_IF_NO_PR]
    --help, -h                        show help
 
 ```
+
+</details>
+
+<details>
+
+<summary>CLI reference of `github-create-next-semantic-release`</summary>
+
+```console
+$ github-create-next-semantic-release --help
+
+NAME:
+   github-next-semantic-version - Compute the next semantic version with merged PRs and corresponding labels
+
+USAGE:
+   github-next-semantic-version [global options] command [command options] LOCAL_GIT_REPO_PATH
+
+COMMANDS:
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --log-level value                   log level (DEBUG, INFO, WARN, ERROR) (default: "INFO") [$LOG_LEVEL]
+   --log-format value                  log format (text-human, text, json, json-gcp) (default: "text-human") [$LOG_FORMAT]
+   --github-token value                github token [$GITHUB_TOKEN]
+   --repo-owner value                  repository owner (organization); if not set, we are going to try to guess [$GNSV_REPO_OWNER]
+   --repo-name value                   repository name (without owner/organization part); if not set, we are going to try to guess [$GNSV_REPO_NAME]
+   --branch value                      Branch to filter on [$GNSV_BRANCH_NAME]
+   --major-labels value                Coma separated list of PR labels to consider as major (default: "major,breaking,Type: Major") [$GNSV_MAJOR_LABELS]
+   --minor-labels value                Coma separated list of PR labels to consider as minor (default: "feature,Type: Feature,Type: Minor") [$GNSV_MINOR_LABELS]
+   --ignore-labels value               Coma separated list of PR labels to consider as ignored PRs (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
+   --consider-also-non-merged-prs      Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
+   --minimal-delay-in-seconds value    Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
+   --tag-regex value                   Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
+   --release-draft                     if set, the release is created in draft mode (default: false) [$GNSV_RELEASE_DRAFT]
+   --release-body-template value       golang template to generate the release body (default: "{{ range . }}- {{.Title}} (#{{.Number}})\n{{ end }}") [$GNSV_RELEASE_BODY_TEMPLATE]
+   --release-body-template-path value  golang template path to generate the release body (if set, release-body-template option is ignored) [$GNSV_RELEASE_BODY_TEMPLATE_PATH]
+   --release-force value               if set, force the version bump and the creation of a release (even if there is no PR) [$GNSV_RELEASE_FORCE]
+   --help, -h                          show help
+
+```
+
+</details>
 
 ## DEV
 
