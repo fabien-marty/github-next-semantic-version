@@ -9,6 +9,7 @@ on:
         options: 
           - "yes"
           - "no"
+        default: "no"
         required: true
       force:
         type: choice
@@ -16,6 +17,7 @@ on:
         options: 
           - "yes"
           - "no"
+        default: "no"
         required: true
 
 jobs:
@@ -46,6 +48,6 @@ jobs:
             OPTIONS="${OPTIONS} --dont-increment-if-no-pr"
           fi
           echo "OPTIONS=${OPTIONS}"
-          ./cmd/github-create-next-semantic-release/github-create-next-semantic-release --log-level=DEBUG ${OPTIONS}
+          ./cmd/github-create-next-semantic-release/github-create-next-semantic-release --log-level=DEBUG ${OPTIONS} .
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
