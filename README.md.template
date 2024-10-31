@@ -5,7 +5,7 @@
 ## What is it?
 
 `github-next-semantic-version` is a little CLI binary (written in golang) to
-**guesses the next [semantic version](https://semver.org/)** from:
+**guess the next [semantic version](https://semver.org/)** from:
 
 - existing **git tags** *(read from a locally cloned git repository)*
 - and recently merged **pull-requests labels** *(read from the GitHub API)*
@@ -33,7 +33,7 @@ $ # v1.10.1 is the next version
 >
 > *(of course, you can define your own labels to configure the logic)*
 
-We also provide another CLI binary: `github-create-next-semantic-release` to use previous rules but to automatically create a GitHub release
+We also provide another CLI binary: `github-create-next-semantic-release` to use the previous rules to automatically create a GitHub release
 with the guessed version and the corresponding release notes (made from merged PRs and a configurable template).
 
 ## Features
@@ -71,7 +71,7 @@ We provide compiled binaries for various architecture in the [release page](http
 
 <details open>
 
-<summary>CLI reference of `github-next-semantic-version`</summary>
+<summary>CLI reference of github-next-semantic-version</summary>
 
 ```console
 $ github-next-semantic-version --help
@@ -83,7 +83,7 @@ $ github-next-semantic-version --help
 
 <details>
 
-<summary>CLI reference of `github-create-next-semantic-release`</summary>
+<summary>CLI reference of github-create-next-semantic-release</summary>
 
 ```console
 $ github-create-next-semantic-release --help
