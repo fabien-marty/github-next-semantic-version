@@ -86,9 +86,8 @@ func CreateReleaseMain() {
 		Usage:   "golang template path to generate the release body (if set, release-body-template option is ignored)",
 		EnvVars: []string{"GNSV_RELEASE_BODY_TEMPLATE_PATH"},
 	})
-	cliFlags = append(cliFlags, &cli.StringFlag{
+	cliFlags = append(cliFlags, &cli.BoolFlag{
 		Name:    "release-force",
-		Value:   "",
 		Usage:   "if set, force the version bump and the creation of a release (even if there is no PR)",
 		EnvVars: []string{"GNSV_RELEASE_FORCE"},
 	})
