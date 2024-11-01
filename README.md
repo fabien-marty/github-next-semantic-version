@@ -137,7 +137,7 @@ GLOBAL OPTIONS:
    --release-draft                     if set, the release is created in draft mode (default: false) [$GNSV_RELEASE_DRAFT]
    --release-body-template value       golang template to generate the release body (default: "{{ range . }}- {{.Title}} (#{{.Number}})\n{{ end }}") [$GNSV_RELEASE_BODY_TEMPLATE]
    --release-body-template-path value  golang template path to generate the release body (if set, release-body-template option is ignored) [$GNSV_RELEASE_BODY_TEMPLATE_PATH]
-   --release-force value               if set, force the version bump and the creation of a release (even if there is no PR) [$GNSV_RELEASE_FORCE]
+   --release-force                     if set, force the version bump and the creation of a release (even if there is no PR) (default: false) [$GNSV_RELEASE_FORCE]
    --help, -h                          show help
 
 ```
