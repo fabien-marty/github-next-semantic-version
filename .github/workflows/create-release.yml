@@ -61,6 +61,7 @@ jobs:
     needs: release
     name: Release Go Binary
     runs-on: ubuntu-22.04
+    if: ${{ github.event.inputs.draft == 'no' }}
     permissions:
       contents: write
       packages: write
