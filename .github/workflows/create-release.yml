@@ -85,8 +85,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          project_path: ./cmd/github-next-semantic-version
-          binary_name: github-next-semantic-version
+          project_path: ./cmd/github-create-next-semantic-release
+          binary_name: github-create-next-semantic-release
           compress_assets: "OFF"
           pre_command: export CGO_ENABLED=0
           release_tag: ${{ needs.release.outputs.tag }}
@@ -95,8 +95,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          project_path: ./cmd/github-create-next-semantic-release
-          binary_name: github-create-next-semantic-release
+          project_path: ./cmd/github-next-semantic-version
+          binary_name: github-next-semantic-version
           compress_assets: "OFF"
           pre_command: export CGO_ENABLED=0
           release_tag: ${{ needs.release.outputs.tag }}
