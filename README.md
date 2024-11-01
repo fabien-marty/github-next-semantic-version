@@ -113,10 +113,10 @@ GLOBAL OPTIONS:
 $ github-create-next-semantic-release --help
 
 NAME:
-   github-next-semantic-version - Compute the next semantic version with merged PRs and corresponding labels
+   github-create-next-semantic-release - Create the next semantice release on GitHub (depending on the PRs merged since the last release)
 
 USAGE:
-   github-next-semantic-version [global options] command [command options] LOCAL_GIT_REPO_PATH
+   github-create-next-semantic-release [global options] command [command options] LOCAL_GIT_REPO_PATH
 
 COMMANDS:
    help, h  Shows a list of commands or help for one command

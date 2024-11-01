@@ -92,8 +92,8 @@ func CreateReleaseMain() {
 		EnvVars: []string{"GNSV_RELEASE_FORCE"},
 	})
 	app := &cli.App{
-		Name:      "github-next-semantic-version",
-		Usage:     "Compute the next semantic version with merged PRs and corresponding labels",
+		Name:      "github-create-next-semantic-release",
+		Usage:     "Create the next semantice release on GitHub (depending on the PRs merged since the last release)",
 		Action:    createReleaseAction,
 		ArgsUsage: "LOCAL_GIT_REPO_PATH",
 		Flags:     cliFlags,
