@@ -60,7 +60,7 @@ func createReleaseAction(cCtx *cli.Context) error {
 		if err == app.ErrNoRelease {
 			return cli.Exit(errors.New("no need to create a release => use --release-force if you want to force a version bump and a new release"), 2)
 		}
-		return cli.Exit(err.Error(), 1)
+		return cli.Exit(err.Error(), 2)
 	}
 	fmt.Println(newTag)
 	return nil
