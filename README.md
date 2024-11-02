@@ -33,8 +33,12 @@ $ # v1.10.1 is the next version
 >
 > *(of course, you can define your own labels to configure the logic)*
 
-We also provide another CLI binary: `github-create-next-semantic-release` to use the previous rules to automatically create a GitHub release
-with the guessed version and the corresponding release notes (made from merged PRs and a configurable template).
+> [!NOTE]
+> We also provide:
+>
+> - a dedicated GitHub Action in [this dedicated repository](https://github.com/fabien-marty/github-next-semantic-version-action) *if you want to use this tool inside a GHA workflow*
+> - another CLI binary: `github-create-next-semantic-release` *(in this current repository)* to use the previous rules to automatically create a GitHub release with the guessed version and the corresponding release notes *(made from merged PRs and a configurable template)*
+> - another GitHub Action in [this other repository](https://github.com/fabien-marty/github-create-next-semantic-release) *if you want to use this alternate tool: `github-create-next-semantic-release` inside a GHA workflow*
 
 ## Features
 
@@ -52,16 +56,14 @@ with the guessed version and the corresponding release notes (made from merged P
 
 ## Installation / Quickstart
 
-> [!NOTE]
-> If you want to use this tool inside a GHA workflow, we provide a dedicated GitHub Action in
-> [this dedicated repository](https://github.com/fabien-marty/github-next-semantic-version-action).
-
 We provide compiled binaries for various architecture in the [release page](https://github.com/fabien-marty/github-next-semantic-version/releases).
 
 - download the corresponding file
 - set the "executable bit"
 - clone a public repository locally (with all tags)
 - execute `./github-next-semantic-version .`
+
+*(same for `github-create-next-semantic-release` binary)*
 
 > [!NOTE]
 > Of course it also works with private repositories but you will need a GitHub token
