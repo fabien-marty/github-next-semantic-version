@@ -50,7 +50,11 @@ func nextVersionAction(cCtx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
-	fmt.Printf("%s => %s\n", oldVersion, newVersion)
+	if cCtx.Bool("next-version-only") {
+		fmt.Printf("%s\n", newVersion)
+	} else {
+		fmt.Printf("%s => %s\n", oldVersion, newVersion)
+	}
 	return nil
 }
 
@@ -61,6 +65,12 @@ func NextVersionMain() {
 		Value:   false,
 		Usage:   "Don't increment the version if no PR is found (or if only ignored PRs found)",
 		EnvVars: []string{"GNSV_DONT_INCREMENT_IF_NO_PR"},
+	})
+	cliFlags = append(cliFlags, &cli.BoolFlag{
+		Name:    "next-version-only",
+		Value:   false,
+		Usage:   "If set, output only the next version (without the old one)",
+		EnvVars: []string{"GNSV_NEXT_VERSION_ONLY"},
 	})
 	app := &cli.App{
 		Name:      "github-next-semantic-version",
