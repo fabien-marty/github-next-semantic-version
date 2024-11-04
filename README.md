@@ -101,6 +101,7 @@ GLOBAL OPTIONS:
    --minimal-delay-in-seconds value  Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
    --tag-regex value                 Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
    --dont-increment-if-no-pr         Don't increment the version if no PR is found (or if only ignored PRs found) (default: false) [$GNSV_DONT_INCREMENT_IF_NO_PR]
+   --next-version-only               If set, output only the next version (without the old one) (default: false) [$GNSV_NEXT_VERSION_ONLY]
    --help, -h                        show help
 
 ```
