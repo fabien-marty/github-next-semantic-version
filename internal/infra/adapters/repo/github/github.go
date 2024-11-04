@@ -41,7 +41,7 @@ func NewAdapter(owner string, repo string, opts AdapterOptions) *Adapter {
 	}
 }
 
-func (r *Adapter) getPullRequestsSince(state state, base string, t time.Time) ([]repo.PullRequest, error) {
+func (r *Adapter) getPullRequestsSince(state state, base string, t time.Time) ([]*repo.PullRequest, error) {
 	listOptionsState := "open"
 	if state == merged {
 		listOptionsState = "closed"
@@ -55,7 +55,7 @@ func (r *Adapter) getPullRequestsSince(state state, base string, t time.Time) ([
 			Page: 1,
 		},
 	}
-	res := []repo.PullRequest{}
+	res := []*repo.PullRequest{}
 out:
 	for {
 		prs, resp, err := r.client.PullRequests.List(context.Background(), r.owner, r.repo, listOptions)
@@ -88,7 +88,7 @@ out:
 			if pr.MergedAt != nil {
 				mergedAt = pr.MergedAt.GetTime()
 			}
-			res = append(res, repo.PullRequest{
+			res = append(res, &repo.PullRequest{
 				Number:   *pr.Number,
 				Title:    *pr.Title,
 				MergedAt: mergedAt,
@@ -103,7 +103,7 @@ out:
 	return res, nil
 }
 
-func (r *Adapter) GetPullRequestsSince(base string, t time.Time, onlyMerged bool) (res []repo.PullRequest, err error) {
+func (r *Adapter) GetPullRequestsSince(base string, t time.Time, onlyMerged bool) (res []*repo.PullRequest, err error) {
 	if onlyMerged {
 		return r.getPullRequestsSince(merged, base, t)
 	}

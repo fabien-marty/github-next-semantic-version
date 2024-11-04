@@ -31,11 +31,11 @@ type release struct {
 }
 
 type repoDummyAdapter struct {
-	prs      []repo.PullRequest
+	prs      []*repo.PullRequest
 	releases []release
 }
 
-func (d *repoDummyAdapter) GetPullRequestsSince(base string, t time.Time, onlyMerged bool) ([]repo.PullRequest, error) {
+func (d *repoDummyAdapter) GetPullRequestsSince(base string, t time.Time, onlyMerged bool) ([]*repo.PullRequest, error) {
 	return d.prs, nil
 }
 
@@ -86,10 +86,17 @@ func TestGetContainedTags(t *testing.T) {
 	config := NewDefaultConfig()
 	config.TagRegex = "^v1.*"
 	service := NewService(config, repoAdapter, gitAdapter)
-	tags, err := service.getContainedTags("main")
+	tags, err := service.getContainedTags("main", nil)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(tags))
 	assert.Equal(t, "v1.0.0", tags[0].Name)
+	config.TagRegex = ""
+	service = NewService(config, repoAdapter, gitAdapter)
+	tags, err = service.getContainedTags("main", nil)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(tags))
+	assert.Equal(t, "v1.0.0", tags[0].Name)
+	assert.Equal(t, "v2.0.1", tags[1].Name)
 }
 
 func TestGetLatestSemanticTagWithoutSemantic(t *testing.T) {
@@ -127,7 +134,7 @@ func TestGetNextVersionMinor(t *testing.T) {
 	}
 	now := time.Now()
 	repoAdapter := &repoDummyAdapter{
-		prs: []repo.PullRequest{
+		prs: []*repo.PullRequest{
 			{
 				Number:   1,
 				Title:    "PR1",
@@ -157,7 +164,7 @@ func TestGetNextVersionMinor2(t *testing.T) {
 	}
 	now := time.Now()
 	repoAdapter := &repoDummyAdapter{
-		prs: []repo.PullRequest{
+		prs: []*repo.PullRequest{
 			{
 				Number:   1,
 				Title:    "PR1",
@@ -187,7 +194,7 @@ func TestGetNextVersionMajor(t *testing.T) {
 	}
 	now := time.Now()
 	repoAdapter := &repoDummyAdapter{
-		prs: []repo.PullRequest{
+		prs: []*repo.PullRequest{
 			{
 				Number:   1,
 				Title:    "PR1",
@@ -222,7 +229,7 @@ func TestGetNextVersionPatch(t *testing.T) {
 		},
 	}
 	repoAdapter := &repoDummyAdapter{
-		prs: []repo.PullRequest{},
+		prs: []*repo.PullRequest{},
 	}
 	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
 	old, version, _, err := service.GetNextVersion("main", true, false)
@@ -239,7 +246,7 @@ func TestCreateRelease(t *testing.T) {
 	}
 	now := time.Now()
 	repoAdapter := &repoDummyAdapter{
-		prs: []repo.PullRequest{
+		prs: []*repo.PullRequest{
 			{
 				Number:   1,
 				Title:    "PR1",

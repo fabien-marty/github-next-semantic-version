@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/fabien-marty/github-next-semantic-version/internal/app/changelog"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
 )
@@ -43,15 +44,14 @@ func NewService(config Config, repoAdapter repo.Port, gitAdapter git.Port) *Serv
 	}
 }
 
-// getContainedTags returns the list of tags contained by the branch
-// (the list from the adapter is optionally filtered by the tag-regex configuration)
-func (s *Service) getContainedTags(branch string) ([]*git.Tag, error) {
+// getContainedTags returns the list of tags contained by the branch set after the given time
+// (the list from the adapter is optionally filtered by the tag-regex configuration,
+// the branch can be empty, since can be empty)
+// the returned tag list is sorted by ascending time
+func (s *Service) getContainedTags(branch string, since *time.Time) ([]*git.Tag, error) {
 	res, err := s.gitAdapter.GetContainedTags(branch)
 	if err != nil {
 		return nil, err
-	}
-	if s.config.TagRegex == "" {
-		return res, nil
 	}
 	var filtered []*git.Tag
 	regex, err := regexp.Compile(s.config.TagRegex)
@@ -59,7 +59,7 @@ func (s *Service) getContainedTags(branch string) ([]*git.Tag, error) {
 		return res, fmt.Errorf("can't compile the regex %s: %w", s.config.TagRegex, err)
 	}
 	for _, tag := range res {
-		if regex.MatchString(tag.Name) {
+		if regex.MatchString(tag.Name) && (since == nil || tag.Time.After(*since)) {
 			filtered = append(filtered, tag)
 		}
 	}
@@ -70,7 +70,7 @@ func (s *Service) getContainedTags(branch string) ([]*git.Tag, error) {
 // If no tag is found, it returns ErrNoTags
 func (s *Service) getLatestSemanticNonPrereleaseTag(branch string) (*git.Tag, error) {
 	logger := s.logger.With(slog.String("branch", branch))
-	tags, err := s.getContainedTags(branch)
+	tags, err := s.getContainedTags(branch, nil)
 	if err != nil {
 		return nil, fmt.Errorf("can't get the list of tags contained by %s: %w", branch, err)
 	}
@@ -103,7 +103,7 @@ func (s *Service) getLatestSemanticNonPrereleaseTag(branch string) (*git.Tag, er
 }
 
 // GetNextVersion returns the next semantic version based on the branch and the PRs merged since the last tag + PRs still opened (if onlyMerged is false)
-func (s *Service) GetNextVersion(branch string, onlyMerged bool, dontIncrementIfNoPR bool) (oldVersion string, newVersion string, consideredPullRequests []repo.PullRequest, err error) {
+func (s *Service) GetNextVersion(branch string, onlyMerged bool, dontIncrementIfNoPR bool) (oldVersion string, newVersion string, consideredPullRequests []*repo.PullRequest, err error) {
 	logger := s.logger
 	latestTag, err := s.getLatestSemanticNonPrereleaseTag(branch)
 	if err == errNoTags {
@@ -120,14 +120,12 @@ func (s *Service) GetNextVersion(branch string, onlyMerged bool, dontIncrementIf
 	logger.Debug(fmt.Sprintf("%d PRs to consider", len(prs)))
 	increment := nothing
 	pullRequestConfig := s.config.PullRequestConfig()
-	for _, pr := range prs {
+	tags := []*git.Tag{latestTag}
+	changelog := changelog.New(tags, prs, s.config.MinimalDelayInSeconds)
+	for _, pr := range changelog.GetFuturePrs() {
 		logger := logger.With(slog.Int("number", pr.Number), slog.String("title", pr.Title), slog.Bool("merged", pr.MergedAt != nil))
 		if pr.MergedAt != nil {
 			logger = logger.With(slog.String("mergedAt", pr.MergedAt.Format(time.RFC3339)))
-			if latestTag.Time.Add(time.Second * time.Duration(s.config.MinimalDelayInSeconds)).After(*pr.MergedAt) {
-				logger.Debug("PR merged too soon, lightweight tag probably used => ignoring this PR")
-				continue
-			}
 		}
 		if pr.IsIgnored(pullRequestConfig) {
 			logger.Debug("ignored PR found")
@@ -173,7 +171,7 @@ func (s *Service) GetNextVersion(branch string, onlyMerged bool, dontIncrementIf
 	}
 }
 
-func (s *Service) getReleaseBodyFromPRs(prs []repo.PullRequest, bodyTemplate *template.Template) (string, error) {
+func (s *Service) getReleaseBodyFromPRs(prs []*repo.PullRequest, bodyTemplate *template.Template) (string, error) {
 	var body bytes.Buffer
 	err := bodyTemplate.Execute(&body, prs)
 	if err != nil {
@@ -200,4 +198,22 @@ func (s *Service) CreateNextRelease(branch string, dontIncrementIfNoPR bool, dra
 		return "", fmt.Errorf("can't create the release body: %w", err)
 	}
 	return newTag, s.repoAdapter.CreateRelease(branch, newTag, body, draft)
+}
+
+func (s *Service) GenerateChangelog(branch string, onlyMerged bool, since *time.Time, bodyTemplateString string, full bool) (string, error) {
+	tags, err := s.getContainedTags(branch, since)
+	if err != nil {
+		return "", err
+	}
+	t := time.Unix(0, 0)
+	if since != nil {
+		t = *since
+	}
+	prs, err := s.repoAdapter.GetPullRequestsSince(branch, t, onlyMerged)
+	if err != nil {
+		return "", err
+	}
+	changelog := changelog.New(tags, prs, s.config.MinimalDelayInSeconds)
+	_ = changelog
+	return "", nil
 }
