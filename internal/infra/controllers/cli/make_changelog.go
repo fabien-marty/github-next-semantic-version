@@ -8,13 +8,14 @@ import (
 	"strings"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app"
+	"github.com/fabien-marty/github-next-semantic-version/internal/app/changelog"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
 	gitlocal "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/git/local"
 	repogithub "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/repo/github"
 	"github.com/urfave/cli/v2"
 )
 
-func createReleaseAction(cCtx *cli.Context) error {
+func makeChangelogAction(cCtx *cli.Context) error {
 	setDefaultLogger(cCtx)
 	localGitPath := cCtx.Args().Get(0)
 	if localGitPath == "" {
@@ -40,54 +41,43 @@ func createReleaseAction(cCtx *cli.Context) error {
 		RepoName:                repoName,
 	}
 	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
-	releaseBodyTemplate := cCtx.String("release-body-template")
-	if cCtx.String("release-body-template-path") != "" {
-		body, err := os.ReadFile(cCtx.String("release-body-template-path"))
+	templateString := changelog.DefaultTemplateString
+	if cCtx.String("template-path") != "" {
+		templateStringBytes, err := os.ReadFile(cCtx.String("template-path"))
 		if err != nil {
-			return cli.Exit(fmt.Sprintf("Can't read the release body template file: %s", err), 1)
+			return cli.Exit(fmt.Sprintf("Can't read the changelog template file: %s", err), 1)
 		}
-		releaseBodyTemplate = string(body)
+		templateString = string(templateStringBytes)
 	}
-	newTag, err := service.CreateNextRelease(branch, !cCtx.Bool("release-force"), cCtx.Bool("release-draft"), releaseBodyTemplate)
+	changelog, err := service.GenerateChangelog(branch, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("future"), nil, templateString)
 	if err != nil {
 		if err == app.ErrNoRelease {
 			return cli.Exit(errors.New("no need to create a release => use --release-force if you want to force a version bump and a new release"), 2)
 		}
 		return cli.Exit(err.Error(), 2)
 	}
-	fmt.Println(newTag)
+	fmt.Println(changelog)
 	return nil
 }
 
-func CreateReleaseMain() {
-	cliFlags := addExtraCommonCliFlags(commonCliFlags)
+func MakeChangelogMain() {
+	cliFlags := commonCliFlags
 	cliFlags = append(cliFlags, &cli.BoolFlag{
-		Name:    "release-draft",
+		Name:    "future",
 		Value:   false,
-		Usage:   "if set, the release is created in draft mode",
-		EnvVars: []string{"GNSV_RELEASE_DRAFT"},
+		Usage:   "if set, include a future section",
+		EnvVars: []string{"GNSV_CHANGELOG_FUTURE"},
 	})
 	cliFlags = append(cliFlags, &cli.StringFlag{
-		Name:    "release-body-template",
-		Value:   "{{ range . }}- {{.Title}} (#{{.Number}})\n{{ end }}",
-		Usage:   "golang template to generate the release body",
-		EnvVars: []string{"GNSV_RELEASE_BODY_TEMPLATE"},
-	})
-	cliFlags = append(cliFlags, &cli.StringFlag{
-		Name:    "release-body-template-path",
+		Name:    "template-path",
 		Value:   "",
-		Usage:   "golang template path to generate the release body (if set, release-body-template option is ignored)",
-		EnvVars: []string{"GNSV_RELEASE_BODY_TEMPLATE_PATH"},
-	})
-	cliFlags = append(cliFlags, &cli.BoolFlag{
-		Name:    "release-force",
-		Usage:   "if set, force the version bump and the creation of a release (even if there is no PR)",
-		EnvVars: []string{"GNSV_RELEASE_FORCE"},
+		Usage:   "if set, define the path to the changelog template",
+		EnvVars: []string{"GNSV_CHANGELOG_TEMPLATE_PATH"},
 	})
 	app := &cli.App{
-		Name:      "github-create-next-semantic-release",
-		Usage:     "Create the next semantice release on GitHub (depending on the PRs merged since the last release)",
-		Action:    createReleaseAction,
+		Name:      "github-generate-changelog",
+		Usage:     "Make a changelog from local git tags and GitHub merged PRs",
+		Action:    makeChangelogAction,
 		ArgsUsage: "LOCAL_GIT_REPO_PATH",
 		Flags:     cliFlags,
 	}

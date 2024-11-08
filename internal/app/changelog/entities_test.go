@@ -10,9 +10,9 @@ import (
 )
 
 func TestNewChangelog(t *testing.T) {
-	tag1 := &git.Tag{Time: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)}
-	tag2 := &git.Tag{Time: time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)}
-	tag3 := &git.Tag{Time: time.Date(2023, 3, 1, 0, 0, 0, 0, time.UTC)}
+	tag1 := git.NewTag("v1.0.0", time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC))
+	tag2 := git.NewTag("v2.0.0", time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC))
+	tag3 := git.NewTag("v3.0.0", time.Date(2023, 3, 1, 0, 0, 0, 0, time.UTC))
 
 	pr1 := &repo.PullRequest{MergedAt: &[]time.Time{time.Date(2023, 1, 15, 0, 0, 0, 0, time.UTC)}[0]}
 	pr2 := &repo.PullRequest{MergedAt: &[]time.Time{time.Date(2023, 2, 15, 0, 0, 0, 0, time.UTC)}[0]}
@@ -23,13 +23,12 @@ func TestNewChangelog(t *testing.T) {
 	tags := []*git.Tag{tag3, tag1, tag2}
 	prs := []*repo.PullRequest{pr4, pr2, pr1, pr3, pr2bis}
 
-	changelog := New(tags, prs, 5)
+	changelog := New(tags, prs, Config{
+		MinimalDelayInSeconds: 5,
+		Future:                true,
+	})
 
 	assert.Equal(t, 4, len(changelog.Sections))
-
-	if len(changelog.Sections) != 4 {
-		t.Fatalf("expected 4 sections, got %d", len(changelog.Sections))
-	}
 
 	// Check first section
 	section := changelog.Sections[0]
@@ -55,6 +54,21 @@ func TestNewChangelog(t *testing.T) {
 	assert.Equal(t, 2, len(section.Prs))
 	assert.Equal(t, pr3, section.Prs[0])
 	assert.Equal(t, pr4, section.Prs[1])
+
+	reversed := changelog.ReversedSections()
+
+	assert.Equal(t, 4, len(reversed))
+
+	section = reversed[0]
+	assert.Nil(t, section.Tag)
+	assert.Equal(t, 2, len(section.Prs))
+	assert.Equal(t, pr3, section.Prs[0])
+	assert.Equal(t, pr4, section.Prs[1])
+
+	section = reversed[3]
+	assert.Equal(t, tag1, section.Tag)
+	assert.Equal(t, 0, len(section.Prs))
+
 }
 
 func TestIsPullRequestIncludedInThisSegment(t *testing.T) {

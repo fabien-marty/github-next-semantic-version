@@ -95,6 +95,18 @@ $ github-create-next-semantic-release --help
 
 </details>
 
+<details>
+
+<summary>CLI reference of github-generate-changelog</summary>
+
+```console
+$ github-generate-changelog --help
+
+{{ "./cmd/github-generate-changelog/github-generate-changelog --help"|shell() }}
+```
+
+</details>
+
 ## DEV
 
 This tool is fully developped in Golang 1.21+ with following libraries:

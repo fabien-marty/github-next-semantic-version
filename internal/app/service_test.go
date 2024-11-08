@@ -1,10 +1,13 @@
 package app
 
 import (
+	_ "embed"
+	"fmt"
 	"log/slog"
 	"testing"
 	"time"
 
+	"github.com/fabien-marty/github-next-semantic-version/internal/app/changelog"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
 	"github.com/fabien-marty/slog-helpers/pkg/slogc"
@@ -271,4 +274,71 @@ func TestCreateRelease(t *testing.T) {
 	assert.Equal(t, "v1.1.0", newTag)
 	assert.False(t, r.draft)
 	assert.Equal(t, "- PR1 (#1)\n- PR2 (#2)\n", r.body)
+}
+
+func TestGenerateChangelog(t *testing.T) {
+	now, err := time.Parse("2006-01-02", "2024-01-02")
+	assert.Nil(t, err)
+	now5 := now.Add(5 * time.Hour)
+	now6 := now.Add(6 * time.Hour)
+	now20 := now.Add(20 * time.Hour)
+	gitAdapter := &gitDummyAdapter{
+		tags: []*git.Tag{
+			git.NewTag("1.0.0", now.Add(1*time.Hour)),
+			git.NewTag("2.0.0", now.Add(10*time.Hour)),
+		},
+	}
+	repoAdapter := &repoDummyAdapter{
+		prs: []*repo.PullRequest{
+			{
+				Number:   1,
+				Title:    "PR1",
+				Labels:   []string{"foo", "Type: Bug"},
+				MergedAt: &now,
+			},
+			{
+				Number:   2,
+				Title:    "PR2",
+				Labels:   []string{"Type: Major", "Type: Feature"},
+				MergedAt: &now5,
+			},
+			{
+				Number:   3,
+				Title:    "PR3",
+				Labels:   []string{"foo", "Type: Feature"},
+				MergedAt: &now6,
+			},
+			{
+				Number:   4,
+				Title:    "PR4",
+				Labels:   []string{"Type: Bug"},
+				MergedAt: &now6,
+			},
+			{
+				Number:   5,
+				Title:    "PR5",
+				Labels:   []string{"foo", "Type: Bug"},
+				MergedAt: &now20,
+			},
+			{
+				Number:   6,
+				Title:    "PR6",
+				Labels:   []string{"foo", "bar"},
+				MergedAt: &now20,
+			},
+			{
+				Number:   7,
+				Title:    "PR7",
+				Labels:   []string{},
+				MergedAt: &now20,
+			},
+		},
+	}
+	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
+	res, err := service.GenerateChangelog("main", true, true, nil, changelog.DefaultTemplateString)
+	assert.Nil(t, err)
+	fmt.Println("**********")
+	fmt.Println(res)
+	fmt.Println("**********")
+	//assert.Equal(t, "", res)
 }

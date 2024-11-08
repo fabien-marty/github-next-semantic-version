@@ -1,6 +1,8 @@
 package changelog
 
 import (
+	"log/slog"
+	"slices"
 	"sort"
 	"time"
 
@@ -8,13 +10,30 @@ import (
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
 )
 
-type ChangelogSection struct {
+type Config struct {
+	MinimalDelayInSeconds   int
+	Future                  bool
+	RepoOwner               string
+	RepoName                string
+	PullRequestIgnoreLabels []string
+}
+
+type Section struct {
 	Tag *git.Tag            // Tag (or nil if this is the "future" section)
 	Prs []*repo.PullRequest // List of pull-requests "contained" by this tag
 }
 
 type Changelog struct {
-	Sections []*ChangelogSection
+	Sections  []*Section
+	RepoOwner string // Repository owner name (organization)
+	RepoName  string // Repository name (without owner/organization part)
+}
+
+func (c *Changelog) ReversedSections() []*Section {
+	reversed := make([]*Section, len(c.Sections))
+	copy(reversed, c.Sections)
+	slices.Reverse(reversed)
+	return reversed
 }
 
 func (c *Changelog) GetFuturePrs() []*repo.PullRequest {
@@ -24,6 +43,50 @@ func (c *Changelog) GetFuturePrs() []*repo.PullRequest {
 		}
 	}
 	return nil
+}
+
+func (cs *Section) GetPrsWithOneOfTheseLabels(labels []interface{}) []*repo.PullRequest {
+	prs := make([]*repo.PullRequest, 0)
+	for _, pr := range cs.Prs {
+		selected := false
+		for _, prLabel := range pr.Labels {
+			for _, label := range labels {
+				if label == prLabel {
+					selected = true
+					break
+				}
+			}
+			if selected {
+				break
+			}
+		}
+		if selected {
+			prs = append(prs, pr)
+		}
+	}
+	return prs
+}
+
+func (cs *Section) GetPrsWithNoneOfTheseLabels(labels []interface{}) []*repo.PullRequest {
+	prs := make([]*repo.PullRequest, 0)
+	for _, pr := range cs.Prs {
+		selected := true
+		for _, prLabel := range pr.Labels {
+			for _, label := range labels {
+				if label == prLabel {
+					selected = false
+					break
+				}
+			}
+			if !selected {
+				break
+			}
+		}
+		if selected {
+			prs = append(prs, pr)
+		}
+	}
+	return prs
 }
 
 // isPullRequestIncludedInThisSegment returns true if the given pr was merged after tag1 and before tag2
@@ -45,12 +108,15 @@ func isPullRequestIncludedInThisSegment(pr *repo.PullRequest, tag1 *git.Tag, tag
 	return true
 }
 
-func New(tags []*git.Tag, prs []*repo.PullRequest, minimalDelayInSeconds int) *Changelog {
-	sections := []*ChangelogSection{}
+func New(tags []*git.Tag, prs []*repo.PullRequest, config Config) *Changelog {
+	logger := slog.Default()
+	sections := []*Section{}
 	sort.Slice(tags, func(i, j int) bool {
 		return tags[i].Time.Before(tags[j].Time)
 	})
-	tags = append(tags, nil)
+	if config.Future {
+		tags = append(tags, nil)
+	}
 	sort.Slice(prs, func(i, j int) bool {
 		if prs[i].MergedAt == nil {
 			return false
@@ -62,17 +128,29 @@ func New(tags []*git.Tag, prs []*repo.PullRequest, minimalDelayInSeconds int) *C
 	})
 	var previousTag *git.Tag
 	for _, tag := range tags {
-		section := &ChangelogSection{
+		if tag != nil && tag.Semver == nil {
+			logger.Debug("can't compute a semver from the tag => ignoring it", slog.String("tag", tag.Name))
+			continue
+		}
+		section := &Section{
 			Tag: tag,
 			Prs: make([]*repo.PullRequest, 0),
 		}
 		for _, pr := range prs {
-			if isPullRequestIncludedInThisSegment(pr, previousTag, tag, minimalDelayInSeconds) {
+			if isPullRequestIncludedInThisSegment(pr, previousTag, tag, config.MinimalDelayInSeconds) {
+				if pr.IsIgnored(config.PullRequestIgnoreLabels) {
+					logger.Debug("ignore a PR", slog.Int("number", pr.Number))
+					continue
+				}
 				section.Prs = append(section.Prs, pr)
 			}
 		}
 		sections = append(sections, section)
 		previousTag = tag
 	}
-	return &Changelog{Sections: sections}
+	return &Changelog{
+		RepoOwner: config.RepoOwner,
+		RepoName:  config.RepoName,
+		Sections:  sections,
+	}
 }

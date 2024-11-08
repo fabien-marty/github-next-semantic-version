@@ -94,12 +94,12 @@ GLOBAL OPTIONS:
    --repo-owner value                repository owner (organization); if not set, we are going to try to guess [$GNSV_REPO_OWNER]
    --repo-name value                 repository name (without owner/organization part); if not set, we are going to try to guess [$GNSV_REPO_NAME]
    --branch value                    Branch to filter on [$GNSV_BRANCH_NAME]
+   --consider-also-non-merged-prs    Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
+   --tag-regex value                 Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
+   --ignore-labels value             Coma separated list of PR labels to consider as ignored PRs (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
    --major-labels value              Coma separated list of PR labels to consider as major (default: "major,breaking,Type: Major") [$GNSV_MAJOR_LABELS]
    --minor-labels value              Coma separated list of PR labels to consider as minor (default: "feature,Type: Feature,Type: Minor") [$GNSV_MINOR_LABELS]
-   --ignore-labels value             Coma separated list of PR labels to consider as ignored PRs (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
-   --consider-also-non-merged-prs    Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
    --minimal-delay-in-seconds value  Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
-   --tag-regex value                 Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
    --dont-increment-if-no-pr         Don't increment the version if no PR is found (or if only ignored PRs found) (default: false) [$GNSV_DONT_INCREMENT_IF_NO_PR]
    --next-version-only               If set, output only the next version (without the old one) (default: false) [$GNSV_NEXT_VERSION_ONLY]
    --help, -h                        show help
@@ -131,17 +131,51 @@ GLOBAL OPTIONS:
    --repo-owner value                  repository owner (organization); if not set, we are going to try to guess [$GNSV_REPO_OWNER]
    --repo-name value                   repository name (without owner/organization part); if not set, we are going to try to guess [$GNSV_REPO_NAME]
    --branch value                      Branch to filter on [$GNSV_BRANCH_NAME]
+   --consider-also-non-merged-prs      Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
+   --tag-regex value                   Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
+   --ignore-labels value               Coma separated list of PR labels to consider as ignored PRs (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
    --major-labels value                Coma separated list of PR labels to consider as major (default: "major,breaking,Type: Major") [$GNSV_MAJOR_LABELS]
    --minor-labels value                Coma separated list of PR labels to consider as minor (default: "feature,Type: Feature,Type: Minor") [$GNSV_MINOR_LABELS]
-   --ignore-labels value               Coma separated list of PR labels to consider as ignored PRs (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
-   --consider-also-non-merged-prs      Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
    --minimal-delay-in-seconds value    Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
-   --tag-regex value                   Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
    --release-draft                     if set, the release is created in draft mode (default: false) [$GNSV_RELEASE_DRAFT]
    --release-body-template value       golang template to generate the release body (default: "{{ range . }}- {{.Title}} (#{{.Number}})\n{{ end }}") [$GNSV_RELEASE_BODY_TEMPLATE]
    --release-body-template-path value  golang template path to generate the release body (if set, release-body-template option is ignored) [$GNSV_RELEASE_BODY_TEMPLATE_PATH]
    --release-force                     if set, force the version bump and the creation of a release (even if there is no PR) (default: false) [$GNSV_RELEASE_FORCE]
    --help, -h                          show help
+
+```
+
+</details>
+
+<details>
+
+<summary>CLI reference of github-generate-changelog</summary>
+
+```console
+$ github-generate-changelog --help
+
+NAME:
+   github-generate-changelog - Make a changelog from local git tags and GitHub merged PRs
+
+USAGE:
+   github-generate-changelog [global options] command [command options] LOCAL_GIT_REPO_PATH
+
+COMMANDS:
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --log-level value               log level (DEBUG, INFO, WARN, ERROR) (default: "INFO") [$LOG_LEVEL]
+   --log-format value              log format (text-human, text, json, json-gcp) (default: "text-human") [$LOG_FORMAT]
+   --github-token value            github token [$GITHUB_TOKEN]
+   --repo-owner value              repository owner (organization); if not set, we are going to try to guess [$GNSV_REPO_OWNER]
+   --repo-name value               repository name (without owner/organization part); if not set, we are going to try to guess [$GNSV_REPO_NAME]
+   --branch value                  Branch to filter on [$GNSV_BRANCH_NAME]
+   --consider-also-non-merged-prs  Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
+   --tag-regex value               Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
+   --ignore-labels value           Coma separated list of PR labels to consider as ignored PRs (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
+   --future                        if set, include a future section (default: false) [$GNSV_CHANGELOG_FUTURE]
+   --template-path value           if set, define the path to the changelog template [$GNSV_CHANGELOG_TEMPLATE_PATH]
+   --help, -h                      show help
 
 ```
 

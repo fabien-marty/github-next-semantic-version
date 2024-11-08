@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/changelog"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
@@ -119,24 +120,24 @@ func (s *Service) GetNextVersion(branch string, onlyMerged bool, dontIncrementIf
 	}
 	logger.Debug(fmt.Sprintf("%d PRs to consider", len(prs)))
 	increment := nothing
-	pullRequestConfig := s.config.PullRequestConfig()
 	tags := []*git.Tag{latestTag}
-	changelog := changelog.New(tags, prs, s.config.MinimalDelayInSeconds)
+	changelog := changelog.New(tags, prs, changelog.Config{
+		Future:                true,
+		MinimalDelayInSeconds: s.config.MinimalDelayInSeconds,
+		RepoOwner:             s.config.RepoOwner,
+		RepoName:              s.config.RepoName,
+	})
 	for _, pr := range changelog.GetFuturePrs() {
 		logger := logger.With(slog.Int("number", pr.Number), slog.String("title", pr.Title), slog.Bool("merged", pr.MergedAt != nil))
 		if pr.MergedAt != nil {
 			logger = logger.With(slog.String("mergedAt", pr.MergedAt.Format(time.RFC3339)))
 		}
-		if pr.IsIgnored(pullRequestConfig) {
-			logger.Debug("ignored PR found")
-			continue
-		}
 		consideredPullRequests = append(consideredPullRequests, pr)
-		if pr.IsMajor(pullRequestConfig) {
+		if pr.IsMajor(s.config.PullRequestMajorLabels) {
 			logger.Debug("major PR found => break")
 			increment = major
 			break
-		} else if pr.IsMinor(pullRequestConfig) {
+		} else if pr.IsMinor(s.config.PullRequestMinorLabels) {
 			logger.Debug("minor PR found")
 			if increment == nothing || increment == patch {
 				increment = minor
@@ -200,7 +201,12 @@ func (s *Service) CreateNextRelease(branch string, dontIncrementIfNoPR bool, dra
 	return newTag, s.repoAdapter.CreateRelease(branch, newTag, body, draft)
 }
 
-func (s *Service) GenerateChangelog(branch string, onlyMerged bool, since *time.Time, bodyTemplateString string, full bool) (string, error) {
+func (s *Service) GenerateChangelog(branch string, onlyMerged bool, future bool, since *time.Time, changelogTemplateString string) (string, error) {
+	changelogTemplate := template.New("changelog").Funcs(sprig.FuncMap())
+	changelogTemplate, err := changelogTemplate.Parse(changelogTemplateString)
+	if err != nil {
+		return "", fmt.Errorf("can't parse the template: %w", err)
+	}
 	tags, err := s.getContainedTags(branch, since)
 	if err != nil {
 		return "", err
@@ -213,7 +219,16 @@ func (s *Service) GenerateChangelog(branch string, onlyMerged bool, since *time.
 	if err != nil {
 		return "", err
 	}
-	changelog := changelog.New(tags, prs, s.config.MinimalDelayInSeconds)
-	_ = changelog
-	return "", nil
+	changelog := changelog.New(tags, prs, changelog.Config{
+		MinimalDelayInSeconds: s.config.MinimalDelayInSeconds,
+		Future:                future,
+		RepoOwner:             s.config.RepoOwner,
+		RepoName:              s.config.RepoName,
+	})
+	var body bytes.Buffer
+	err = changelogTemplate.Execute(&body, changelog)
+	if err != nil {
+		return "", fmt.Errorf("can't execute the template: %w on changelog object: %+v", err, changelog)
+	}
+	return body.String(), nil
 }

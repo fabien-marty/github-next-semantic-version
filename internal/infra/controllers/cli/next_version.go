@@ -22,18 +22,9 @@ func nextVersionAction(cCtx *cli.Context) error {
 	var gitLocalAdapter git.Port = gitlocal.NewAdapter(gitlocal.AdapterOptions{
 		LocalGitPath: localGitPath,
 	})
-	repoOwner := cCtx.String("repo-owner")
-	repoName := cCtx.String("repo-name")
-	if repoOwner == "" || repoName == "" {
-		ghActions := os.Getenv("GITHUB_ACTIONS")
-		if ghActions == "true" {
-			repoOwner, repoName = guessGHRepoFromEnv()
-		} else {
-			repoOwner, repoName = gitLocalAdapter.GuessGHRepo()
-		}
-		if repoOwner == "" || repoName == "" {
-			return cli.Exit("Can't guess the repository owner and name => please provide them as CLI flags", 1)
-		}
+	repoOwner, repoName, err := getRepoOwnerAndRepoName(cCtx, gitLocalAdapter)
+	if err != nil {
+		return err
 	}
 	slog.Debug(fmt.Sprintf("Repository owner: %s, repository name: %s", repoOwner, repoName))
 	branch := cCtx.String("branch")
@@ -44,6 +35,8 @@ func nextVersionAction(cCtx *cli.Context) error {
 		PullRequestIgnoreLabels: strings.Split(cCtx.String("ignore-labels"), ","),
 		MinimalDelayInSeconds:   cCtx.Int("minimal-delay-in-seconds"),
 		TagRegex:                cCtx.String("tag-regex"),
+		RepoOwner:               repoOwner,
+		RepoName:                repoName,
 	}
 	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
 	oldVersion, newVersion, _, err := service.GetNextVersion(branch, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("dont-increment-if-no-pr"))
@@ -59,7 +52,7 @@ func nextVersionAction(cCtx *cli.Context) error {
 }
 
 func NextVersionMain() {
-	cliFlags := commonCliFlags
+	cliFlags := addExtraCommonCliFlags(commonCliFlags)
 	cliFlags = append(cliFlags, &cli.BoolFlag{
 		Name:    "dont-increment-if-no-pr",
 		Value:   false,

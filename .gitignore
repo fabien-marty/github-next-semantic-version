@@ -23,5 +23,7 @@ go.work.sum
 /coverage.out
 /cmd/github-next-semantic-version/github-next-semantic-version
 /cmd/github-create-next-semantic-release/github-create-next-semantic-release
+/cmd/github-generate-changelog/github-generate-changelog
+
 /tmp
 /.vscode
