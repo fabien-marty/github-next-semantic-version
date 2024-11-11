@@ -93,6 +93,8 @@ jobs:
           fi
           echo "Let's create the PR"
           gh pr create --title "Automatic Changelog" --body "Automatic Changelog" --repo "${{ github.repository }}" --head "${BRANCH}" --label "Type: Hidden"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   release_go_binary:
     needs: release
     name: Release Go Binary
