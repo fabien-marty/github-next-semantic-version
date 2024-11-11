@@ -1,4 +1,12 @@
 # CHANGELOG
+## v0.6.0 (2024-11-11)
+
+[Full Changelog](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.5.6...v0.6.0)
+
+**Added**
+- Add next-version-only flag [\#31](https://github.com/fabien-marty/github-next-semantic-version/pull/31) ([fabien-marty](https://github.com/fabien-marty))
+- Add generate-changelog new feature [\#32](https://github.com/fabien-marty/github-next-semantic-version/pull/32) ([fabien-marty](https://github.com/fabien-marty))
+
 ## v0.5.6 (2024-11-02)
 
 [Full Changelog](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.5.5...v0.5.6)
