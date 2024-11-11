@@ -52,37 +52,15 @@ jobs:
         id: output
         run: |
           echo "tag=${{ steps.create-release.outputs.new-tag}}" >>"$GITHUB_OUTPUT"
-  release_go_binary:
-    needs: release
-    name: Release Go Binary
-    runs-on: ubuntu-22.04
-    if: ${{ github.event.inputs.draft == 'no' && needs.release.outputs.tag != '' }}
-    permissions:
-      contents: write
-      packages: write
-      pull-requests: read
-    strategy:
-      matrix:
-        goos: [linux, windows, darwin]
-        goarch: [amd64, arm64]
-        exclude:
-          - goarch: arm64
-            goos: windows
-    steps:
-      - uses: actions/checkout@v4
-      - name: Debug
-        run: |
-          echo "tag=${{ needs.release.outputs.tag }}"
-      - uses: actions/setup-go@v4
-        with:
-          go-version: "1.21"
-      - name: Build
+      - name: "Build"
         run: |
           make build
-      - name: Generate Changelog
+      - name: "Generate Changelog"
         run: |
-          ./cmd/github-generate-changelog/github-generate-changelog --branch main .
-      - name: Create a CHANGELOG PR
+          ./cmd/github-generate-changelog/github-generate-changelog --branch main . >CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create a Changelog PR
         run: |
           DIFF=$(git status --short)
           if test "${DIFF}" = ""; then
@@ -115,6 +93,27 @@ jobs:
           fi
           echo "Let's create the PR"
           gh pr create --title "Automatic Changelog" --body "Automatic Changelog" --repo "${{ github.repository }}" --head "${BRANCH}" --label "Type: Hidden"
+  release_go_binary:
+    needs: release
+    name: Release Go Binary
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.inputs.draft == 'no' && needs.release.outputs.tag != '' }}
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: read
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goarch: arm64
+            goos: windows
+    steps:
+      - uses: actions/checkout@v4
+      - name: Debug
+        run: |
+          echo "tag=${{ needs.release.outputs.tag }}"
       - uses: wangyoucao577/go-release-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
