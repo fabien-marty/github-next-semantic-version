@@ -131,6 +131,13 @@ func guessGHRepoFromEnv() (owner string, repo string) {
 	return "", ""
 }
 
+func specialSplit(s string, sep string) []string {
+	if s == "" {
+		return []string{}
+	}
+	return strings.Split(s, sep)
+}
+
 func getService(cCtx *cli.Context) (*app.Service, error) {
 	localGitPath := cCtx.Args().Get(0)
 	if localGitPath == "" {
@@ -146,10 +153,10 @@ func getService(cCtx *cli.Context) (*app.Service, error) {
 	slog.Debug(fmt.Sprintf("Repository owner: %s, repository name: %s", repoOwner, repoName))
 	repoGithubAdapter := repogithub.NewAdapter(repoOwner, repoName, repogithub.AdapterOptions{Token: cCtx.String("github-token")})
 	appConfig := app.Config{
-		PullRequestMajorLabels:    strings.Split(cCtx.String("major-labels"), ","),
-		PullRequestMinorLabels:    strings.Split(cCtx.String("minor-labels"), ","),
-		PullRequestIgnoreLabels:   strings.Split(cCtx.String("ignore-labels"), ","),
-		PullRequestMustHaveLabels: strings.Split(cCtx.String("must-have-labels"), ","),
+		PullRequestMajorLabels:    specialSplit(cCtx.String("major-labels"), ","),
+		PullRequestMinorLabels:    specialSplit(cCtx.String("minor-labels"), ","),
+		PullRequestIgnoreLabels:   specialSplit(cCtx.String("ignore-labels"), ","),
+		PullRequestMustHaveLabels: specialSplit(cCtx.String("must-have-labels"), ","),
 		MinimalDelayInSeconds:     cCtx.Int("minimal-delay-in-seconds"),
 		TagRegex:                  cCtx.String("tag-regex"),
 		RepoOwner:                 repoOwner,
