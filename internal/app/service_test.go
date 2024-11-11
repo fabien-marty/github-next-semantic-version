@@ -19,7 +19,9 @@ type gitDummyAdapter struct {
 }
 
 func (d *gitDummyAdapter) GetContainedTags(branch string) ([]*git.Tag, error) {
-	return d.tags, nil
+	res := make([]*git.Tag, len(d.tags))
+	copy(res, d.tags)
+	return res, nil
 }
 
 func (d *gitDummyAdapter) GuessGHRepo() (owner string, repo string) {
@@ -68,8 +70,8 @@ func TestGetLatestSemanticTag(t *testing.T) {
 	repoAdapter := &repoDummyAdapter{}
 	gitAdapter := &gitDummyAdapter{
 		tags: []*git.Tag{
-			git.NewTag("v1.0.0", time.Now()),
 			git.NewTag("v1.0.1", time.Now().Add(1*time.Hour)),
+			git.NewTag("v1.0.0", time.Now()),
 		},
 	}
 	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
@@ -82,8 +84,8 @@ func TestGetContainedTags(t *testing.T) {
 	repoAdapter := &repoDummyAdapter{}
 	gitAdapter := &gitDummyAdapter{
 		tags: []*git.Tag{
-			git.NewTag("v1.0.0", time.Now()),
 			git.NewTag("v2.0.1", time.Now().Add(1*time.Hour)),
+			git.NewTag("v1.0.0", time.Now()),
 		},
 	}
 	config := NewDefaultConfig()
@@ -291,6 +293,12 @@ func TestGenerateChangelog(t *testing.T) {
 	repoAdapter := &repoDummyAdapter{
 		prs: []*repo.PullRequest{
 			{
+				Number:   4,
+				Title:    "PR4",
+				Labels:   []string{"Type: Bug"},
+				MergedAt: &now6,
+			},
+			{
 				Number:   1,
 				Title:    "PR1",
 				Labels:   []string{"foo", "Type: Bug"},
@@ -306,12 +314,6 @@ func TestGenerateChangelog(t *testing.T) {
 				Number:   3,
 				Title:    "PR3",
 				Labels:   []string{"foo", "Type: Feature"},
-				MergedAt: &now6,
-			},
-			{
-				Number:   4,
-				Title:    "PR4",
-				Labels:   []string{"Type: Bug"},
 				MergedAt: &now6,
 			},
 			{

@@ -1,9 +1,7 @@
 package changelog
 
 import (
-	"log/slog"
 	"slices"
-	"sort"
 	"time"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
@@ -108,40 +106,22 @@ func isPullRequestIncludedInThisSegment(pr *repo.PullRequest, tag1 *git.Tag, tag
 	return true
 }
 
+// New creates a new Changelog instance with the given tags and pull-requests
+// tags must be sorted by semver (ascending)
+// prs must be sorted by mergedAt (ascending)
 func New(tags []*git.Tag, prs []*repo.PullRequest, config Config) *Changelog {
-	logger := slog.Default()
 	sections := []*Section{}
-	sort.Slice(tags, func(i, j int) bool {
-		return tags[i].Time.Before(tags[j].Time)
-	})
 	if config.Future {
 		tags = append(tags, nil)
 	}
-	sort.Slice(prs, func(i, j int) bool {
-		if prs[i].MergedAt == nil {
-			return false
-		}
-		if prs[j].MergedAt == nil {
-			return true
-		}
-		return prs[i].MergedAt.Before(*prs[j].MergedAt)
-	})
 	var previousTag *git.Tag
 	for _, tag := range tags {
-		if tag != nil && tag.Semver == nil {
-			logger.Debug("can't compute a semver from the tag => ignoring it", slog.String("tag", tag.Name))
-			continue
-		}
 		section := &Section{
 			Tag: tag,
 			Prs: make([]*repo.PullRequest, 0),
 		}
 		for _, pr := range prs {
 			if isPullRequestIncludedInThisSegment(pr, previousTag, tag, config.MinimalDelayInSeconds) {
-				if pr.IsIgnored(config.PullRequestIgnoreLabels) {
-					logger.Debug("ignore a PR", slog.Int("number", pr.Number))
-					continue
-				}
 				section.Prs = append(section.Prs, pr)
 			}
 		}

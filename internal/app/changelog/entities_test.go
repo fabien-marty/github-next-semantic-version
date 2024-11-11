@@ -20,8 +20,8 @@ func TestNewChangelog(t *testing.T) {
 	pr3 := &repo.PullRequest{MergedAt: &[]time.Time{time.Date(2023, 3, 15, 0, 0, 0, 0, time.UTC)}[0]}
 	pr4 := &repo.PullRequest{MergedAt: nil} // not merged PR
 
-	tags := []*git.Tag{tag3, tag1, tag2}
-	prs := []*repo.PullRequest{pr4, pr2, pr1, pr3, pr2bis}
+	tags := []*git.Tag{tag1, tag2, tag3}
+	prs := []*repo.PullRequest{pr1, pr2, pr2bis, pr3, pr4}
 
 	changelog := New(tags, prs, Config{
 		MinimalDelayInSeconds: 5,

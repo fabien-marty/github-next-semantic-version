@@ -1,10 +1,15 @@
 package cli
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
+	"github.com/fabien-marty/github-next-semantic-version/internal/app"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
+	gitlocal "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/git/local"
+	repogithub "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/repo/github"
 	"github.com/fabien-marty/slog-helpers/pkg/slogc"
 	"github.com/urfave/cli/v2"
 )
@@ -58,8 +63,19 @@ var commonCliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:    "ignore-labels",
 		Value:   "Type: Hidden",
-		Usage:   "Coma separated list of PR labels to consider as ignored PRs",
+		Usage:   "Coma separated list of PR labels to consider as ignored PRs (OR condition)",
 		EnvVars: []string{"GNSV_HIDDEN_LABELS"},
+	},
+	&cli.StringFlag{
+		Name:    "must-have-labels",
+		Value:   "",
+		Usage:   "Coma separated list of PR labels that PRs must have to be considered (OR condition, empty => no filtering)",
+		EnvVars: []string{"GNSV_MUST_HAVE_LABELS"},
+	},
+	&cli.IntFlag{
+		Name:  "minimal-delay-in-seconds",
+		Value: 5,
+		Usage: "Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR)",
 	},
 }
 
@@ -69,19 +85,14 @@ func addExtraCommonCliFlags(cliFlags []cli.Flag) []cli.Flag {
 	res = append(res, &cli.StringFlag{
 		Name:    "major-labels",
 		Value:   "major,breaking,Type: Major",
-		Usage:   "Coma separated list of PR labels to consider as major",
+		Usage:   "Coma separated list of PR labels to consider as major (OR condition)",
 		EnvVars: []string{"GNSV_MAJOR_LABELS"},
 	})
 	res = append(res, &cli.StringFlag{
 		Name:    "minor-labels",
 		Value:   "feature,Type: Feature,Type: Minor",
-		Usage:   "Coma separated list of PR labels to consider as minor",
+		Usage:   "Coma separated list of PR labels to consider as minor (OR condition)",
 		EnvVars: []string{"GNSV_MINOR_LABELS"},
-	})
-	res = append(res, &cli.IntFlag{
-		Name:  "minimal-delay-in-seconds",
-		Value: 5,
-		Usage: "Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR)",
 	})
 	return res
 }
@@ -118,4 +129,32 @@ func guessGHRepoFromEnv() (owner string, repo string) {
 		return ghOwner, ghRepository[len(ghOwner)+1:]
 	}
 	return "", ""
+}
+
+func getService(cCtx *cli.Context) (*app.Service, error) {
+	localGitPath := cCtx.Args().Get(0)
+	if localGitPath == "" {
+		return nil, cli.Exit("You have to set LOCAL_GIT_REPO_PATH argument (use . for the currently dir)", 1)
+	}
+	var gitLocalAdapter git.Port = gitlocal.NewAdapter(gitlocal.AdapterOptions{
+		LocalGitPath: localGitPath,
+	})
+	repoOwner, repoName, err := getRepoOwnerAndRepoName(cCtx, gitLocalAdapter)
+	if err != nil {
+		return nil, err
+	}
+	slog.Debug(fmt.Sprintf("Repository owner: %s, repository name: %s", repoOwner, repoName))
+	repoGithubAdapter := repogithub.NewAdapter(repoOwner, repoName, repogithub.AdapterOptions{Token: cCtx.String("github-token")})
+	appConfig := app.Config{
+		PullRequestMajorLabels:    strings.Split(cCtx.String("major-labels"), ","),
+		PullRequestMinorLabels:    strings.Split(cCtx.String("minor-labels"), ","),
+		PullRequestIgnoreLabels:   strings.Split(cCtx.String("ignore-labels"), ","),
+		PullRequestMustHaveLabels: strings.Split(cCtx.String("must-have-labels"), ","),
+		MinimalDelayInSeconds:     cCtx.Int("minimal-delay-in-seconds"),
+		TagRegex:                  cCtx.String("tag-regex"),
+		RepoOwner:                 repoOwner,
+		RepoName:                  repoName,
+	}
+	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
+	return service, nil
 }

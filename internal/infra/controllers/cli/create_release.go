@@ -5,41 +5,18 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app"
-	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
-	gitlocal "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/git/local"
-	repogithub "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/repo/github"
 	"github.com/urfave/cli/v2"
 )
 
 func createReleaseAction(cCtx *cli.Context) error {
 	setDefaultLogger(cCtx)
-	localGitPath := cCtx.Args().Get(0)
-	if localGitPath == "" {
-		return cli.Exit("You have to set LOCAL_GIT_REPO_PATH argument (use . for the currently dir)", 1)
-	}
-	var gitLocalAdapter git.Port = gitlocal.NewAdapter(gitlocal.AdapterOptions{
-		LocalGitPath: localGitPath,
-	})
-	repoOwner, repoName, err := getRepoOwnerAndRepoName(cCtx, gitLocalAdapter)
+	branch := cCtx.String("branch")
+	service, err := getService(cCtx)
 	if err != nil {
 		return err
 	}
-	slog.Debug(fmt.Sprintf("Repository owner: %s, repository name: %s", repoOwner, repoName))
-	branch := cCtx.String("branch")
-	repoGithubAdapter := repogithub.NewAdapter(repoOwner, repoName, repogithub.AdapterOptions{Token: cCtx.String("github-token")})
-	appConfig := app.Config{
-		PullRequestMajorLabels:  strings.Split(cCtx.String("major-labels"), ","),
-		PullRequestMinorLabels:  strings.Split(cCtx.String("minor-labels"), ","),
-		PullRequestIgnoreLabels: strings.Split(cCtx.String("ignore-labels"), ","),
-		MinimalDelayInSeconds:   cCtx.Int("minimal-delay-in-seconds"),
-		TagRegex:                cCtx.String("tag-regex"),
-		RepoOwner:               repoOwner,
-		RepoName:                repoName,
-	}
-	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
 	releaseBodyTemplate := cCtx.String("release-body-template")
 	if cCtx.String("release-body-template-path") != "" {
 		body, err := os.ReadFile(cCtx.String("release-body-template-path"))

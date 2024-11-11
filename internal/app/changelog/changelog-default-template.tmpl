@@ -12,7 +12,7 @@
 {{- $repoName := .RepoName }}
 {{- range $i, $section := $reversedSections }}
 	{{- if $section.Tag }}
-## Version {{ $section.Tag.Semver }} (released on {{ $section.Tag.Time.Format "2006-01-02" }})
+## {{ $section.Tag.Name }} ({{ $section.Tag.Time.Format "2006-01-02" }})
 	{{- else }}
 ## Future version **(not released)**
 	{{- end }}
@@ -20,7 +20,7 @@
 		{{- if $section.Tag }}
 			{{- $previousSection := index $reversedSections (add $i 1) }}
 
-[Full Changelog](https://github.com/{{ $repoOwner }}/{{ $repoName }}/compare/{{ $section.Tag.Name }}...{{ $previousSection.Tag.Name }})
+[Full Changelog](https://github.com/{{ $repoOwner }}/{{ $repoName }}/compare/{{ $previousSection.Tag.Name }}...{{ $section.Tag.Name }})
 		{{- end }}
 	{{- end }}
 	{{- range $group := $groups }}
