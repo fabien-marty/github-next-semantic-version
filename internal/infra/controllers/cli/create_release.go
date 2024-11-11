@@ -5,48 +5,18 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app"
-	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
-	gitlocal "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/git/local"
-	repogithub "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/repo/github"
 	"github.com/urfave/cli/v2"
 )
 
 func createReleaseAction(cCtx *cli.Context) error {
 	setDefaultLogger(cCtx)
-	localGitPath := cCtx.Args().Get(0)
-	if localGitPath == "" {
-		return cli.Exit("You have to set LOCAL_GIT_REPO_PATH argument (use . for the currently dir)", 1)
-	}
-	var gitLocalAdapter git.Port = gitlocal.NewAdapter(gitlocal.AdapterOptions{
-		LocalGitPath: localGitPath,
-	})
-	repoOwner := cCtx.String("repo-owner")
-	repoName := cCtx.String("repo-name")
-	if repoOwner == "" || repoName == "" {
-		ghActions := os.Getenv("GITHUB_ACTIONS")
-		if ghActions == "true" {
-			repoOwner, repoName = guessGHRepoFromEnv()
-		} else {
-			repoOwner, repoName = gitLocalAdapter.GuessGHRepo()
-		}
-		if repoOwner == "" || repoName == "" {
-			return cli.Exit("Can't guess the repository owner and name => please provide them as CLI flags", 1)
-		}
-	}
-	slog.Debug(fmt.Sprintf("Repository owner: %s, repository name: %s", repoOwner, repoName))
 	branch := cCtx.String("branch")
-	repoGithubAdapter := repogithub.NewAdapter(repoOwner, repoName, repogithub.AdapterOptions{Token: cCtx.String("github-token")})
-	appConfig := app.Config{
-		PullRequestMajorLabels:  strings.Split(cCtx.String("major-labels"), ","),
-		PullRequestMinorLabels:  strings.Split(cCtx.String("minor-labels"), ","),
-		PullRequestIgnoreLabels: strings.Split(cCtx.String("ignore-labels"), ","),
-		MinimalDelayInSeconds:   cCtx.Int("minimal-delay-in-seconds"),
-		TagRegex:                cCtx.String("tag-regex"),
+	service, err := getService(cCtx)
+	if err != nil {
+		return err
 	}
-	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
 	releaseBodyTemplate := cCtx.String("release-body-template")
 	if cCtx.String("release-body-template-path") != "" {
 		body, err := os.ReadFile(cCtx.String("release-body-template-path"))
@@ -67,7 +37,7 @@ func createReleaseAction(cCtx *cli.Context) error {
 }
 
 func CreateReleaseMain() {
-	cliFlags := commonCliFlags
+	cliFlags := addExtraCommonCliFlags(commonCliFlags)
 	cliFlags = append(cliFlags, &cli.BoolFlag{
 		Name:    "release-draft",
 		Value:   false,

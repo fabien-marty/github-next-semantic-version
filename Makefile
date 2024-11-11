@@ -1,6 +1,6 @@
 FIX=1
 COMMON_TEST_OPTIONS=-race
-CMDS=cmd/github-next-semantic-version/github-next-semantic-version cmd/github-create-next-semantic-release/github-create-next-semantic-release
+CMDS=cmd/github-next-semantic-version/github-next-semantic-version cmd/github-create-next-semantic-release/github-create-next-semantic-release cmd/github-generate-changelog/github-generate-changelog
 BUILDARGS=
 
 default: help
@@ -12,6 +12,9 @@ cmd/github-next-semantic-version/github-next-semantic-version: $(shell find cmd/
 	cd `dirname $@` && export CGO_ENABLED=0 && go build $(BUILDARGS) -o `basename $@` *.go
 
 cmd/github-create-next-semantic-release/github-create-next-semantic-release: $(shell find cmd/github-create-next-semantic-release internal -type f -name '*.go')
+	cd `dirname $@` && export CGO_ENABLED=0 && go build $(BUILDARGS) -o `basename $@` *.go
+
+cmd/github-generate-changelog/github-generate-changelog: $(shell find cmd/github-generate-changelog internal -type f -name '*.go') internal/app/changelog/changelog-default-template.tmpl
 	cd `dirname $@` && export CGO_ENABLED=0 && go build $(BUILDARGS) -o `basename $@` *.go
 
 .PHONY: gofmt

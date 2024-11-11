@@ -76,6 +76,45 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: "1.21"
+      - name: Build
+        run: |
+          make build
+      - name: Generate Changelog
+        run: |
+          ./cmd/github-generate-changelog/github-generate-changelog --branch main .
+      - name: Create a CHANGELOG PR
+        run: |
+          DIFF=$(git status --short)
+          if test "${DIFF}" = ""; then
+            echo "No changes to commit => exit here"
+            exit 0
+          fi
+          BRANCH="automatic-changelog"
+          N=`git fetch origin "${BRANCH}" 2>/dev/null || echo "NOTFOUND"`
+          if test "${N}" = "NOTFOUND"; then
+            echo "Branch: ${BRANCH} does not exist, let's create a new branch..."
+            git checkout -b "${BRANCH}"
+          else
+            echo "Branch: ${BRANCH} already exists, let's reset this branch with ${GITHUB_REF}..."
+            git stash save --include-untracked
+            git checkout -b "${BRANCH}" "origin/${BRANCH}"
+            git reset --hard "${GITHUB_REF}"
+            git stash apply
+          fi
+          echo "Let's commit and push the changes..."
+          git config --global user.name 'Automatic Changelog'
+          git config --global user.email 'automatic@changelog.com'
+          git add -A 
+          git commit -m "Automatic Changelog"
+          git push -u origin -f "${BRANCH}"
+          echo "Checking existing PRs for head:${BRANCH}..."
+          N=`gh pr list --search "head:${BRANCH} is:pr is:open" --json number |grep number || true`
+          if test "${N}" != ""; then
+            echo "There is already an open PR for this branch => exit here"
+            exit 0
+          fi
+          echo "Let's create the PR"
+          gh pr create --title "Automatic Changelog" --body "Automatic Changelog" --repo "${{ github.repository }}" --head "${BRANCH}" --label "Type: Hidden"
       - uses: wangyoucao577/go-release-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -93,6 +132,16 @@ jobs:
           goarch: ${{ matrix.goarch }}
           project_path: ./cmd/github-next-semantic-version
           binary_name: github-next-semantic-version
+          compress_assets: "OFF"
+          pre_command: export CGO_ENABLED=0
+          release_tag: ${{ needs.release.outputs.tag }}
+      - uses: wangyoucao577/go-release-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          project_path: ./cmd/github-generate-changelog
+          binary_name: github-generate-changelog
           compress_assets: "OFF"
           pre_command: export CGO_ENABLED=0
           release_tag: ${{ needs.release.outputs.tag }}
