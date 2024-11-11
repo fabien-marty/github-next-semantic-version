@@ -27,7 +27,7 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: read
+      pull-requests: write
     outputs:
       tag: ${{ steps.output.outputs.tag }}
     steps:
