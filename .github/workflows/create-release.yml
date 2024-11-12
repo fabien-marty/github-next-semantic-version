@@ -52,6 +52,20 @@ jobs:
         id: output
         run: |
           echo "tag=${{ steps.create-release.outputs.new-tag}}" >>"$GITHUB_OUTPUT"
+  changelog:
+    runs-on: ubuntu-22.04
+    needs: release
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # we need this because fetch-tags=true and because of a GHA bug: https://github.com/actions/checkout/issues/1471
+          fetch-tags: true
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
       - name: "Build"
         run: |
           make build
