@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [v0.6.2](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.6.2) (2024-11-12)
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.6.1...v0.6.2)</sub>
+
+## [v0.6.1](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.6.1) (2024-11-12)
+
+#### Changed
+
+- better changelog template [\#38](https://github.com/fabien-marty/github-next-semantic-version/pull/38) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.6.0...v0.6.1)</sub>
+
 ## [v0.6.0](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.6.0) (2024-11-11)
 
 #### Added
