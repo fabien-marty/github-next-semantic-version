@@ -26,7 +26,9 @@ queue_rules:
     merge_method: squash
     commit_message_template: '{{ title }}'
     queue_conditions:
-      - check-success = main_ci
+      - or:
+        - check-success = main_ci
+        - "-files~=^(?!CHANGELOG\\.md$).*$"
       - "-draft"
       - "-closed"
       - "-conflict"
