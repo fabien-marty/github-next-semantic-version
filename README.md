@@ -38,7 +38,7 @@ $ # v1.10.1 is the next version
 >
 > - a dedicated GitHub Action in [this dedicated repository](https://github.com/fabien-marty/github-next-semantic-version-action) *if you want to use this tool inside a GHA workflow*
 > - another CLI binary: `github-create-next-semantic-release` *(in this current repository)* to use the previous rules to automatically create a GitHub release with the guessed version and the corresponding release notes *(made from merged PRs and a configurable template)*
-> - another GitHub Action in [this other repository](https://github.com/fabien-marty/github-create-next-semantic-release) *if you want to use this alternate tool: `github-create-next-semantic-release` inside a GHA workflow*
+> - another GitHub Action in [this other repository](https://github.com/fabien-marty/github-create-next-semantic-release-action) *if you want to use this alternate tool: `github-create-next-semantic-release` inside a GHA workflow*
 > - a full changelog generator CLI: `github-generate-changelog` (configurable by a [golang text/template](https://pkg.go.dev/text/template))
 
 ## Features
