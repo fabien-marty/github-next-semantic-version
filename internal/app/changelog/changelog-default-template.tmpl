@@ -1,7 +1,4 @@
-# CHANGELOG
-
-
-{{- $security := dict "title" "Security" "match" "one-of-these" "labels" (list "Type: Security" "security") }}
+{{ $security := dict "title" "Security" "match" "one-of-these" "labels" (list "Type: Security" "security") }}
 {{- $added := dict "title" "Added" "match" "one-of-these" "labels" (list "Type: Feature" "feature") }}
 {{- $fixed := dict "title" "Fixed" "match" "one-of-these" "labels" (list "Type: Bug" "bug") }}
 {{- $deprecated := dict "title" "Deprecated" "match" "one-of-these" "labels" (list "Type: Deprecated" "deprecated") }}
@@ -12,19 +9,13 @@
 {{- $groups := list $security $added $fixed $deprecated $removed $changed }}
 {{- $reversedSections := .ReversedSections }}
 {{- $repoOwner := .RepoOwner }}
-{{- $repoName := .RepoName }}
-{{- range $i, $section := $reversedSections }}
+{{- $repoName := .RepoName -}}
+# CHANGELOG
+{{ range $i, $section := $reversedSections }}
 	{{- if $section.Tag }}
-## {{ $section.Tag.Name }} ({{ $section.Tag.Time.Format "2006-01-02" }})
+## [{{ $section.Tag.Name }}](https://github.com/{{ $repoOwner }}/{{ $repoName }}/tree/{{ $section.Tag.Name }}) ({{ $section.Tag.Time.Format "2006-01-02" }})
 	{{- else }}
 ## Future version **(not released)**
-	{{- end }}
-	{{- if lt $i (sub (len $reversedSections) 1) }}
-		{{- if $section.Tag }}
-			{{- $previousSection := index $reversedSections (add $i 1) }}
-
-[Full Changelog](https://github.com/{{ $repoOwner }}/{{ $repoName }}/compare/{{ $previousSection.Tag.Name }}...{{ $section.Tag.Name }})
-		{{- end }}
 	{{- end }}
 	{{- range $group := $groups }}
 		{{- $prs := list }}
@@ -35,10 +26,16 @@
 		{{- end }}
 		{{- if $prs }}
 
-**{{ $group.title }}**
+#### {{ $group.title }}{{ print "\n" }}
 			{{- range $pr := $prs }}
 - {{ $pr.Title }} [\#{{ $pr.Number }}]({{ $pr.Url }}) ([{{ $pr.AuthorLogin }}]({{ $pr.AuthorUrl }}))
 			{{- end }}
+		{{- end }}
+	{{- end }}
+	{{- if lt $i (sub (len $reversedSections) 1) }}
+		{{- if $section.Tag }}
+			{{- $previousSection := index $reversedSections (add $i 1) }}{{ print "\n" }}
+<sub>[Full Diff](https://github.com/{{ $repoOwner }}/{{ $repoName }}/compare/{{ $previousSection.Tag.Name }}...{{ $section.Tag.Name }})</sub>
 		{{- end }}
 	{{- end }}
 {{ end -}}
