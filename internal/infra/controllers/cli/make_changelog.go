@@ -13,11 +13,11 @@ import (
 
 func makeChangelogAction(cCtx *cli.Context) error {
 	setDefaultLogger(cCtx)
-	branch := cCtx.String("branch")
 	service, err := getService(cCtx)
 	if err != nil {
 		return err
 	}
+	branches := getBranches(cCtx, service)
 	templateString := changelog.DefaultTemplateString
 	if cCtx.String("template-path") != "" {
 		templateStringBytes, err := os.ReadFile(cCtx.String("template-path"))
@@ -26,7 +26,10 @@ func makeChangelogAction(cCtx *cli.Context) error {
 		}
 		templateString = string(templateStringBytes)
 	}
-	changelog, err := service.GenerateChangelog(branch, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("future"), nil, templateString)
+	if cCtx.String("starting-tag") == "LATEST" && !cCtx.Bool("future") {
+		return cli.Exit("LATEST is only compatible with --future", 1)
+	}
+	changelog, err := service.GenerateChangelog(branches, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("future"), cCtx.String("starting-tag"), templateString)
 	if err != nil {
 		if err == app.ErrNoRelease {
 			return cli.Exit(errors.New("no need to create a release => use --release-force if you want to force a version bump and a new release"), 2)
@@ -50,6 +53,12 @@ func MakeChangelogMain() {
 		Value:   "",
 		Usage:   "if set, define the path to the changelog template",
 		EnvVars: []string{"GNSV_CHANGELOG_TEMPLATE_PATH"},
+	})
+	cliFlags = append(cliFlags, &cli.StringFlag{
+		Name:    "starting-tag",
+		Value:   "",
+		Usage:   "if set, defining a starting tag (excluded) for changelog generation, the special value 'LATEST' (combined with --future) will use the latest semantic tag to get only the future section",
+		EnvVars: []string{"GNSV_CHANGELOG_STARTING_TAG"},
 	})
 	app := &cli.App{
 		Name:      "github-generate-changelog",

@@ -95,7 +95,7 @@ GLOBAL OPTIONS:
    --github-token value              github token [$GITHUB_TOKEN]
    --repo-owner value                repository owner (organization); if not set, we are going to try to guess [$GNSV_REPO_OWNER]
    --repo-name value                 repository name (without owner/organization part); if not set, we are going to try to guess [$GNSV_REPO_NAME]
-   --branch value                    Branch to filter on [$GNSV_BRANCH_NAME]
+   --branches value, --branch value  Coma separated list of branch names to filter on for getting tags and prs (if not set, the default branch is guessed/used) [$GNSV_BRANCH_NAME]
    --consider-also-non-merged-prs    Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
    --tag-regex value                 Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
    --ignore-labels value             Coma separated list of PR labels to consider as ignored PRs (OR condition) (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
@@ -133,7 +133,7 @@ GLOBAL OPTIONS:
    --github-token value                github token [$GITHUB_TOKEN]
    --repo-owner value                  repository owner (organization); if not set, we are going to try to guess [$GNSV_REPO_OWNER]
    --repo-name value                   repository name (without owner/organization part); if not set, we are going to try to guess [$GNSV_REPO_NAME]
-   --branch value                      Branch to filter on [$GNSV_BRANCH_NAME]
+   --branches value, --branch value    Coma separated list of branch names to filter on for getting tags and prs (if not set, the default branch is guessed/used) [$GNSV_BRANCH_NAME]
    --consider-also-non-merged-prs      Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
    --tag-regex value                   Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
    --ignore-labels value               Coma separated list of PR labels to consider as ignored PRs (OR condition) (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
@@ -173,7 +173,7 @@ GLOBAL OPTIONS:
    --github-token value              github token [$GITHUB_TOKEN]
    --repo-owner value                repository owner (organization); if not set, we are going to try to guess [$GNSV_REPO_OWNER]
    --repo-name value                 repository name (without owner/organization part); if not set, we are going to try to guess [$GNSV_REPO_NAME]
-   --branch value                    Branch to filter on [$GNSV_BRANCH_NAME]
+   --branches value, --branch value  Coma separated list of branch names to filter on for getting tags and prs (if not set, the default branch is guessed/used) [$GNSV_BRANCH_NAME]
    --consider-also-non-merged-prs    Consider also non-merged PRs (default: false) [$GNSV_CONSIDER_ALSO_NON_MERGED_PRS]
    --tag-regex value                 Regex to match tags (if empty string (default) => no filtering) [$GNSV_TAG_REGEX]
    --ignore-labels value             Coma separated list of PR labels to consider as ignored PRs (OR condition) (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
@@ -181,6 +181,7 @@ GLOBAL OPTIONS:
    --minimal-delay-in-seconds value  Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
    --future                          if set, include a future section (default: false) [$GNSV_CHANGELOG_FUTURE]
    --template-path value             if set, define the path to the changelog template [$GNSV_CHANGELOG_TEMPLATE_PATH]
+   --starting-tag value              if set, defining a starting tag (excluded) for changelog generation, the special value 'LATEST' (combined with --future) will use the latest semantic tag to get only the future section [$GNSV_CHANGELOG_STARTING_TAG]
    --help, -h                        show help
 
 ```

@@ -126,6 +126,21 @@ func (r *Adapter) GuessGHRepo() (owner string, repo string) {
 	return extractGHRepoFromRemoteUrl(url)
 }
 
+func (r *Adapter) GuessDefaultBranch() string {
+	logger := slog.Default().With("gitOperation", "guessDefaultBranch")
+	r.cwdOrDie()
+	cmd := exec.Command("git", "remote", "show", "origin")
+	output := r.executeCmdOrDie(logger, cmd)
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmedLine, "HEAD branch:") {
+			return strings.TrimSpace(strings.TrimPrefix(trimmedLine, "HEAD branch:"))
+		}
+	}
+	return ""
+}
+
 func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
 	res := []*git.Tag{}
 	r.cwdOrDie()
