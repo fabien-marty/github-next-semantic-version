@@ -8,7 +8,6 @@
 {{- $changed := dict "title" "Changed" "match" "none-of-these" "labels" $tmplabels }}
 {{- $groups := list $security $added $fixed $deprecated $removed $changed }}
 {{- $reversedSections := .ReversedSections }}
-{{- $branch := .Branch }}
 {{- $repoOwner := .RepoOwner }}
 {{- $repoName := .RepoName -}}
 # CHANGELOG
@@ -16,6 +15,7 @@
 	{{- if $section.Tag }}
 ## [{{ $section.Tag.Name }}](https://github.com/{{ $repoOwner }}/{{ $repoName }}/tree/{{ $section.Tag.Name }}) ({{ $section.Tag.Time.Format "2006-01-02" }})
 	{{- else }}
+	    {{- if eq (len $section.Prs) 0 }}{{ continue }}{{ end }}
 ## Future version **(not released)**
 	{{- end }}
 	{{- range $group := $groups }}
@@ -37,8 +37,6 @@
 		{{- $previousSection := index $reversedSections (add $i 1) }}{{ print "\n" }}
 		{{- if $section.Tag }}
 <sub>[Full Diff](https://github.com/{{ $repoOwner }}/{{ $repoName }}/compare/{{ $previousSection.Tag.Name }}...{{ $section.Tag.Name }})</sub>
-		{{- else }}
-<sub>[Full Diff](https://github.com/{{ $repoOwner }}/{{ $repoName }}/compare/{{ $previousSection.Tag.Name }}...{{ $branch }})</sub>
 		{{- end }}
 	{{- end }}
 {{ end -}}

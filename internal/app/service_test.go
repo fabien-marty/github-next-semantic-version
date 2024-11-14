@@ -300,7 +300,6 @@ func TestGenerateChangelog(t *testing.T) {
 - PR6 [\#6](https://foo.com/6) ([user9](https://foo.com/user9))
 - PR7 [\#7](https://foo.com/7) ([user8](https://foo.com/user8))
 
-<sub>[Full Diff](https://github.com/foo/bar/compare/2.0.0...main)</sub>
 
 ## [2.0.0](https://github.com/foo/bar/tree/2.0.0) (2024-01-02)
 

@@ -298,7 +298,6 @@ func (s *Service) GenerateChangelog(branches []string, onlyMerged bool, future b
 		RepoOwner:               s.Config.RepoOwner,
 		RepoName:                s.Config.RepoName,
 		PullRequestIgnoreLabels: s.Config.PullRequestIgnoreLabels,
-		Branch:                  branches[0],
 	})
 	var body bytes.Buffer
 	err = changelogTemplate.Execute(&body, changelog)
