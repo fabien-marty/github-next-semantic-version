@@ -14,7 +14,6 @@ type Config struct {
 	RepoOwner               string
 	RepoName                string
 	PullRequestIgnoreLabels []string
-	Branch                  string
 }
 
 type Section struct {
@@ -24,7 +23,6 @@ type Section struct {
 
 type Changelog struct {
 	Sections  []*Section
-	Branch    string // Repository branch
 	RepoOwner string // Repository owner name (organization)
 	RepoName  string // Repository name (without owner/organization part)
 }
@@ -134,6 +132,5 @@ func New(tags []*git.Tag, prs []*repo.PullRequest, config Config) *Changelog {
 		RepoOwner: config.RepoOwner,
 		RepoName:  config.RepoName,
 		Sections:  sections,
-		Branch:    config.Branch,
 	}
 }
