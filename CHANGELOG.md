@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [v0.7.1](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.7.1) (2024-11-14)
+
+#### Changed
+
+- display future section [\#43](https://github.com/fabien-marty/github-next-semantic-version/pull/43) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.7.0...v0.7.1)</sub>
+
 ## [v0.7.0](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.7.0) (2024-11-14)
 
 #### Added
