@@ -17,7 +17,8 @@ import (
 var _ git.Port = &Adapter{}
 
 type AdapterOptions struct {
-	LocalGitPath string
+	LocalGitPath     string
+	OriginBranchName string // default to "origin"
 }
 
 type Adapter struct {
@@ -25,6 +26,9 @@ type Adapter struct {
 }
 
 func NewAdapter(opts AdapterOptions) *Adapter {
+	if opts.OriginBranchName == "" {
+		opts.OriginBranchName = "origin"
+	}
 	return &Adapter{
 		opts: opts,
 	}
@@ -89,7 +93,7 @@ func (r *Adapter) getTagNamesOrDie(branch string) []string {
 	logger := slog.Default().With("branch", branch, "gitOperation", "getTagNames")
 	args := []string{"tag"}
 	if branch != "" {
-		args = append(args, "--merged", "refs/heads/"+branch)
+		args = append(args, "--merged", "refs/remotes/"+r.opts.OriginBranchName+"/"+branch)
 	}
 	cmd := exec.Command("git", args...)
 	output := r.executeCmdOrDie(logger, cmd)
@@ -120,10 +124,25 @@ func (r *Adapter) getTagDateOrDie(tagName string) time.Time {
 func (r *Adapter) GuessGHRepo() (owner string, repo string) {
 	logger := slog.Default().With("gitOperation", "guessRepoOwner")
 	r.cwdOrDie()
-	cmd := exec.Command("git", "remote", "get-url", "origin")
+	cmd := exec.Command("git", "remote", "get-url", r.opts.OriginBranchName)
 	output := r.executeCmdOrDie(logger, cmd)
 	url := lastLine(output)
 	return extractGHRepoFromRemoteUrl(url)
+}
+
+func (r *Adapter) GuessDefaultBranch() string {
+	logger := slog.Default().With("gitOperation", "guessDefaultBranch")
+	r.cwdOrDie()
+	cmd := exec.Command("git", "remote", "show", r.opts.OriginBranchName)
+	output := r.executeCmdOrDie(logger, cmd)
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmedLine, "HEAD branch:") {
+			return strings.TrimSpace(strings.TrimPrefix(trimmedLine, "HEAD branch:"))
+		}
+	}
+	return ""
 }
 
 func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {

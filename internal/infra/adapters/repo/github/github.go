@@ -42,7 +42,7 @@ func NewAdapter(owner string, repo string, opts AdapterOptions) *Adapter {
 	}
 }
 
-func (r *Adapter) getPullRequestsSince(state state, base string, t time.Time) ([]*repo.PullRequest, error) {
+func (r *Adapter) getPullRequestsSince(state state, base string, t *time.Time) ([]*repo.PullRequest, error) {
 	logger := slog.Default().With("base", base, "state", string(state), "since", t)
 	listOptionsState := "open"
 	if state == merged {
@@ -70,13 +70,13 @@ out:
 				continue
 			}
 			if state == "merged" {
-				if pr.UpdatedAt.Before(t) {
+				if t != nil && pr.UpdatedAt.Before(*t) {
 					break out
 				}
 				if pr.MergedAt == nil {
 					continue
 				}
-				if pr.MergedAt.GetTime().Before(t) {
+				if t != nil && pr.MergedAt.GetTime().Before(*t) {
 					continue
 				}
 			}
@@ -111,7 +111,7 @@ out:
 	return res, nil
 }
 
-func (r *Adapter) GetPullRequestsSince(base string, t time.Time, onlyMerged bool) (res []*repo.PullRequest, err error) {
+func (r *Adapter) GetPullRequestsSince(base string, t *time.Time, onlyMerged bool) (res []*repo.PullRequest, err error) {
 	if onlyMerged {
 		return r.getPullRequestsSince(merged, base, t)
 	}

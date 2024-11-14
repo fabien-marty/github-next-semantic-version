@@ -4,10 +4,11 @@
 {{- $deprecated := dict "title" "Deprecated" "match" "one-of-these" "labels" (list "Type: Deprecated" "deprecated") }}
 {{- $removed := dict "title" "Removed" "match" "one-of-these" "labels" (list "Type: Removed" "removed") }}
 {{- $tmpgroups := list $added $fixed $security $deprecated $removed }}
-{{- $alllabels := list "" }}{{ range $group := $tmpgroups }}{{ $alllabels = concat $alllabels $group.labels }}{{ end }}
-{{- $changed := dict "title" "Changed" "match" "none-of-these" "labels" $alllabels }}
+{{- $tmplabels := list "" }}{{ range $group := $tmpgroups }}{{ $tmplabels = concat $tmplabels $group.labels }}{{ end }}
+{{- $changed := dict "title" "Changed" "match" "none-of-these" "labels" $tmplabels }}
 {{- $groups := list $security $added $fixed $deprecated $removed $changed }}
 {{- $reversedSections := .ReversedSections }}
+{{- $branch := .Branch }}
 {{- $repoOwner := .RepoOwner }}
 {{- $repoName := .RepoName -}}
 # CHANGELOG
@@ -33,9 +34,11 @@
 		{{- end }}
 	{{- end }}
 	{{- if lt $i (sub (len $reversedSections) 1) }}
+		{{- $previousSection := index $reversedSections (add $i 1) }}{{ print "\n" }}
 		{{- if $section.Tag }}
-			{{- $previousSection := index $reversedSections (add $i 1) }}{{ print "\n" }}
 <sub>[Full Diff](https://github.com/{{ $repoOwner }}/{{ $repoName }}/compare/{{ $previousSection.Tag.Name }}...{{ $section.Tag.Name }})</sub>
+		{{- else }}
+<sub>[Full Diff](https://github.com/{{ $repoOwner }}/{{ $repoName }}/compare/{{ $previousSection.Tag.Name }}...{{ $branch }})</sub>
 		{{- end }}
 	{{- end }}
 {{ end -}}

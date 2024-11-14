@@ -10,12 +10,12 @@ import (
 
 func nextVersionAction(cCtx *cli.Context) error {
 	setDefaultLogger(cCtx)
-	branch := cCtx.String("branch")
 	service, err := getService(cCtx)
 	if err != nil {
 		return err
 	}
-	oldVersion, newVersion, _, err := service.GetNextVersion(branch, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("dont-increment-if-no-pr"))
+	branches := getBranches(cCtx, service)
+	oldVersion, newVersion, _, err := service.GetNextVersion(branches, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("dont-increment-if-no-pr"))
 	if err != nil {
 		return cli.Exit(err.Error(), 1)
 	}

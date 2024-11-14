@@ -12,11 +12,11 @@ import (
 
 func createReleaseAction(cCtx *cli.Context) error {
 	setDefaultLogger(cCtx)
-	branch := cCtx.String("branch")
 	service, err := getService(cCtx)
 	if err != nil {
 		return err
 	}
+	branches := getBranches(cCtx, service)
 	releaseBodyTemplate := cCtx.String("release-body-template")
 	if cCtx.String("release-body-template-path") != "" {
 		body, err := os.ReadFile(cCtx.String("release-body-template-path"))
@@ -25,7 +25,7 @@ func createReleaseAction(cCtx *cli.Context) error {
 		}
 		releaseBodyTemplate = string(body)
 	}
-	newTag, err := service.CreateNextRelease(branch, !cCtx.Bool("release-force"), cCtx.Bool("release-draft"), releaseBodyTemplate)
+	newTag, err := service.CreateNextRelease(branches, !cCtx.Bool("release-force"), cCtx.Bool("release-draft"), releaseBodyTemplate)
 	if err != nil {
 		if err == app.ErrNoRelease {
 			return cli.Exit(errors.New("no need to create a release => use --release-force if you want to force a version bump and a new release"), 2)

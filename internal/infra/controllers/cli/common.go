@@ -43,9 +43,10 @@ var commonCliFlags = []cli.Flag{
 		EnvVars: []string{"GNSV_REPO_NAME"},
 	},
 	&cli.StringFlag{
-		Name:    "branch",
+		Name:    "branches",
+		Aliases: []string{"branch"},
 		Value:   "",
-		Usage:   "Branch to filter on",
+		Usage:   "Coma separated list of branch names to filter on for getting tags and prs (if not set, the default branch is guessed/used)",
 		EnvVars: []string{"GNSV_BRANCH_NAME"},
 	},
 	&cli.BoolFlag{
@@ -132,10 +133,18 @@ func guessGHRepoFromEnv() (owner string, repo string) {
 }
 
 func specialSplit(s string, sep string) []string {
+	res := []string{}
 	if s == "" {
 		return []string{}
 	}
-	return strings.Split(s, sep)
+	tmp := strings.Split(s, sep)
+	for _, t := range tmp {
+		trimT := strings.TrimSpace(t)
+		if trimT != "" {
+			res = append(res, trimT)
+		}
+	}
+	return res
 }
 
 func getService(cCtx *cli.Context) (*app.Service, error) {
@@ -164,4 +173,14 @@ func getService(cCtx *cli.Context) (*app.Service, error) {
 	}
 	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
 	return service, nil
+}
+
+func getBranches(cCtx *cli.Context, service *app.Service) []string {
+	branches := specialSplit(cCtx.String("branches"), ",")
+	if len(branches) == 0 {
+		branch := service.GitAdapter.GuessDefaultBranch()
+		slog.Debug(fmt.Sprintf("branch guessed: %s", branch))
+		branches = append(branches, branch)
+	}
+	return branches
 }
