@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [v0.7.0](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.7.0) (2024-11-14)
+
+#### Added
+
+- Better changelog and branches management [\#41](https://github.com/fabien-marty/github-next-semantic-version/pull/41) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.6.2...v0.7.0)</sub>
+
 ## [v0.6.2](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.6.2) (2024-11-12)
 
 <sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.6.1...v0.6.2)</sub>
