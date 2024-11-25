@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app"
+	"github.com/fabien-marty/github-next-semantic-version/internal/app/changelog"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
+	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
 	gitlocal "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/git/local"
 	repogithub "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/repo/github"
 	"github.com/fabien-marty/slog-helpers/pkg/slogc"
@@ -77,6 +79,12 @@ var commonCliFlags = []cli.Flag{
 		Name:  "minimal-delay-in-seconds",
 		Value: 5,
 		Usage: "Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR)",
+	},
+	&cli.BoolFlag{
+		Name:    "ignore-prereleases",
+		Value:   false,
+		Usage:   "if set, ignore prereleases in the CHANGELOG",
+		EnvVars: []string{"GNSV_IGNORE_PRERELEASES"},
 	},
 }
 
@@ -155,12 +163,14 @@ func getService(cCtx *cli.Context) (*app.Service, error) {
 	var gitLocalAdapter git.Port = gitlocal.NewAdapter(gitlocal.AdapterOptions{
 		LocalGitPath: localGitPath,
 	})
+	gitService := git.New(gitLocalAdapter)
 	repoOwner, repoName, err := getRepoOwnerAndRepoName(cCtx, gitLocalAdapter)
 	if err != nil {
 		return nil, err
 	}
 	slog.Debug(fmt.Sprintf("Repository owner: %s, repository name: %s", repoOwner, repoName))
 	repoGithubAdapter := repogithub.NewAdapter(repoOwner, repoName, repogithub.AdapterOptions{Token: cCtx.String("github-token")})
+	repoService := repo.New(repoGithubAdapter)
 	appConfig := app.Config{
 		PullRequestMajorLabels:    specialSplit(cCtx.String("major-labels"), ","),
 		PullRequestMinorLabels:    specialSplit(cCtx.String("minor-labels"), ","),
@@ -171,16 +181,28 @@ func getService(cCtx *cli.Context) (*app.Service, error) {
 		RepoOwner:                 repoOwner,
 		RepoName:                  repoName,
 	}
-	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
+	service := app.New(appConfig, repoService, gitService)
 	return service, nil
 }
 
 func getBranches(cCtx *cli.Context, service *app.Service) []string {
 	branches := specialSplit(cCtx.String("branches"), ",")
 	if len(branches) == 0 {
-		branch := service.GitAdapter.GuessDefaultBranch()
+		branch := service.GuessDefaultBranch()
 		slog.Debug(fmt.Sprintf("branch guessed: %s", branch))
 		branches = append(branches, branch)
 	}
 	return branches
+}
+
+func getTemplateString(cCtx *cli.Context) (string, error) {
+	templateString := changelog.DefaultTemplateString
+	if cCtx.String("template-path") != "" {
+		templateStringBytes, err := os.ReadFile(cCtx.String("template-path"))
+		if err != nil {
+			return "", cli.Exit(fmt.Sprintf("Can't read the changelog template file: %s", err), 1)
+		}
+		templateString = string(templateStringBytes)
+	}
+	return templateString, nil
 }

@@ -1,6 +1,6 @@
 {{ $security := dict "title" "Security" "match" "one-of-these" "labels" (list "Type: Security" "security") }}
-{{- $added := dict "title" "Added" "match" "one-of-these" "labels" (list "Type: Feature" "feature") }}
-{{- $fixed := dict "title" "Fixed" "match" "one-of-these" "labels" (list "Type: Bug" "bug") }}
+{{- $added := dict "title" "Added" "match" "one-of-these" "labels" (list "Type: Feature" "feature" "minor") }}
+{{- $fixed := dict "title" "Fixed" "match" "one-of-these" "labels" (list "Type: Bug" "bug" "patch") }}
 {{- $deprecated := dict "title" "Deprecated" "match" "one-of-these" "labels" (list "Type: Deprecated" "deprecated") }}
 {{- $removed := dict "title" "Removed" "match" "one-of-these" "labels" (list "Type: Removed" "removed") }}
 {{- $tmpgroups := list $added $fixed $security $deprecated $removed }}
@@ -9,14 +9,19 @@
 {{- $groups := list $security $added $fixed $deprecated $removed $changed }}
 {{- $reversedSections := .ReversedSections }}
 {{- $repoOwner := .RepoOwner }}
-{{- $repoName := .RepoName -}}
+{{- $repoName := .RepoName }}
+{{- $hideSectionHeaders := .HideSectionHeaders }}
+{{- if not .HideMainHeader -}}
 # CHANGELOG
+{{- end }}
 {{ range $i, $section := $reversedSections }}
-	{{- if $section.Tag }}
+	{{- if not $hideSectionHeaders }}
+		{{- if $section.Tag }}
 ## [{{ $section.Tag.Name }}](https://github.com/{{ $repoOwner }}/{{ $repoName }}/tree/{{ $section.Tag.Name }}) ({{ $section.Tag.Time.Format "2006-01-02" }})
-	{{- else }}
-	    {{- if eq (len $section.Prs) 0 }}{{ continue }}{{ end }}
+		{{- else }}
+			{{- if eq (len $section.Prs) 0 }}{{ continue }}{{ end }}
 ## Future version **(not released)**
+		{{- end }}
 	{{- end }}
 	{{- range $group := $groups }}
 		{{- $prs := list }}

@@ -46,7 +46,9 @@ type repoDummyAdapter struct {
 }
 
 func (d *repoDummyAdapter) GetPullRequestsSince(base string, t *time.Time, onlyMerged bool) ([]*repo.PullRequest, error) {
-	return d.prs, nil
+	res := make([]*repo.PullRequest, len(d.prs))
+	copy(res, d.prs)
+	return res, nil
 }
 
 func (d *repoDummyAdapter) CreateRelease(base string, tagName string, body string, draft bool) error {
@@ -74,78 +76,76 @@ func NewDefaultConfig() Config {
 }
 
 func TestGetLatestSemanticTag(t *testing.T) {
-	repoAdapter := &repoDummyAdapter{}
-	gitAdapter := &gitDummyAdapter{
+	now := time.Now()
+	now_1h := now.Add(1 * time.Hour)
+	repoService := repo.New(&repoDummyAdapter{})
+	gitService := git.New(&gitDummyAdapter{
 		tags: []*git.Tag{
-			git.NewTag("v1.0.1", time.Now().Add(1*time.Hour)),
-			git.NewTag("v1.0.0", time.Now()),
+			git.NewTag("v1.0.1", &now_1h),
+			git.NewTag("v1.0.0", &now),
 		},
-	}
-	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	tag, err := service.getLatestSemanticNonPrereleaseTag([]string{"main"})
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	tag, err := service.getLatestTag([]string{"main"}, true, true)
 	assert.Nil(t, err)
 	assert.Equal(t, "v1.0.1", tag.Name)
 }
 
-func TestGetContainedTags(t *testing.T) {
-	repoAdapter := &repoDummyAdapter{}
-	gitAdapter := &gitDummyAdapter{
-		tags: []*git.Tag{
-			git.NewTag("v2.0.1", time.Now().Add(1*time.Hour)),
-			git.NewTag("v1.0.0", time.Now()),
-		},
-	}
-	config := NewDefaultConfig()
-	config.TagRegex = "^v1.*"
-	service := NewService(config, repoAdapter, gitAdapter)
-	tags, err := service.getContainedTags([]string{"main"}, nil)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(tags))
-	assert.Equal(t, "v1.0.0", tags[0].Name)
-	config.TagRegex = ""
-	service = NewService(config, repoAdapter, gitAdapter)
-	tags, err = service.getContainedTags([]string{"main"}, nil)
-	assert.Nil(t, err)
-	assert.Equal(t, 2, len(tags))
-	assert.Equal(t, "v1.0.0", tags[0].Name)
-	assert.Equal(t, "v2.0.1", tags[1].Name)
-}
-
 func TestGetLatestSemanticTagWithoutSemantic(t *testing.T) {
-	repoAdapter := &repoDummyAdapter{}
-	gitAdapter := &gitDummyAdapter{
+	now := time.Now()
+	now_1h := now.Add(1 * time.Hour)
+	repoService := repo.New(&repoDummyAdapter{})
+	gitService := git.New(&gitDummyAdapter{
 		tags: []*git.Tag{
-			git.NewTag("foo", time.Now()),
-			git.NewTag("bar", time.Now().Add(1*time.Hour)),
+			git.NewTag("foo", &now),
+			git.NewTag("bar", &now_1h),
 		},
-	}
-	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	_, err := service.getLatestSemanticNonPrereleaseTag([]string{"main"})
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	_, err := service.getLatestTag([]string{"main"}, true, true)
 	assert.NotNil(t, err)
 }
 
-func TestGetLatestSemanticTagWithPrerelease(t *testing.T) {
-	repoAdapter := &repoDummyAdapter{}
-	gitAdapter := &gitDummyAdapter{
+func TestGetLatestSemanticTagWithPrerelease1(t *testing.T) {
+	now := time.Now()
+	now_1h := now.Add(1 * time.Hour)
+	repoService := repo.New(&repoDummyAdapter{})
+	gitService := git.New(&gitDummyAdapter{
 		tags: []*git.Tag{
-			git.NewTag("v1.0.0", time.Now()),
-			git.NewTag("v1.1.0-beta", time.Now().Add(1*time.Hour)),
+			git.NewTag("v1.0.0", &now),
+			git.NewTag("v1.1.0-beta", &now_1h),
 		},
-	}
-	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	tag, err := service.getLatestSemanticNonPrereleaseTag([]string{"main"})
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	tag, err := service.getLatestTag([]string{"main"}, true, true)
 	assert.Nil(t, err)
 	assert.Equal(t, "v1.0.0", tag.Name)
 }
 
-func TestGetNextVersionMinor(t *testing.T) {
-	gitAdapter := &gitDummyAdapter{
-		tags: []*git.Tag{
-			git.NewTag("v1.0.0", time.Now()),
-		},
-	}
+func TestGetLatestSemanticTagWithPrerelease2(t *testing.T) {
 	now := time.Now()
-	repoAdapter := &repoDummyAdapter{
+	now_1h := now.Add(1 * time.Hour)
+	repoService := repo.New(&repoDummyAdapter{})
+	gitService := git.New(&gitDummyAdapter{
+		tags: []*git.Tag{
+			git.NewTag("v1.0.0", &now),
+			git.NewTag("v1.1.0-beta", &now_1h),
+		},
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	tag, err := service.getLatestTag([]string{"main"}, false, true)
+	assert.Nil(t, err)
+	assert.Equal(t, "v1.1.0-beta", tag.Name)
+}
+
+func TestGetNextVersionMinor(t *testing.T) {
+	now := time.Now()
+	gitService := git.New(&gitDummyAdapter{
+		tags: []*git.Tag{
+			git.NewTag("v1.0.0", &now),
+		},
+	})
+	repoService := repo.New(&repoDummyAdapter{
 		prs: []*repo.PullRequest{
 			{
 				Number:   1,
@@ -160,22 +160,22 @@ func TestGetNextVersionMinor(t *testing.T) {
 				MergedAt: &now,
 			},
 		},
-	}
-	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	old, version, _, err := service.GetNextVersion([]string{"main"}, true, false)
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	old, version, err := service.GetNextVersion([]string{"main"}, true, false, true)
 	assert.Nil(t, err)
 	assert.Equal(t, "v1.0.0", old)
 	assert.Equal(t, "v1.1.0", version)
 }
 
 func TestGetNextVersionMinor2(t *testing.T) {
-	gitAdapter := &gitDummyAdapter{
-		tags: []*git.Tag{
-			git.NewTag("v1.0.0", time.Now()),
-		},
-	}
 	now := time.Now()
-	repoAdapter := &repoDummyAdapter{
+	gitService := git.New(&gitDummyAdapter{
+		tags: []*git.Tag{
+			git.NewTag("v1.0.0", &now),
+		},
+	})
+	repoService := repo.New(&repoDummyAdapter{
 		prs: []*repo.PullRequest{
 			{
 				Number:   1,
@@ -190,22 +190,22 @@ func TestGetNextVersionMinor2(t *testing.T) {
 				MergedAt: &now,
 			},
 		},
-	}
-	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	old, version, _, err := service.GetNextVersion([]string{"main"}, true, false)
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	old, version, err := service.GetNextVersion([]string{"main"}, true, false, true)
 	assert.Nil(t, err)
 	assert.Equal(t, "v1.0.0", old)
 	assert.Equal(t, "v1.1.0", version)
 }
 
 func TestGetNextVersionMajor(t *testing.T) {
-	gitAdapter := &gitDummyAdapter{
-		tags: []*git.Tag{
-			git.NewTag("1.0.0", time.Now()),
-		},
-	}
 	now := time.Now()
-	repoAdapter := &repoDummyAdapter{
+	gitService := git.New(&gitDummyAdapter{
+		tags: []*git.Tag{
+			git.NewTag("1.0.0", &now),
+		},
+	})
+	repoService := repo.New(&repoDummyAdapter{
 		prs: []*repo.PullRequest{
 			{
 				Number:   1,
@@ -226,55 +226,95 @@ func TestGetNextVersionMajor(t *testing.T) {
 				MergedAt: &now,
 			},
 		},
-	}
-	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	old, version, _, err := service.GetNextVersion([]string{"main"}, true, false)
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	old, version, err := service.GetNextVersion([]string{"main"}, true, false, true)
 	assert.Nil(t, err)
 	assert.Equal(t, "1.0.0", old)
 	assert.Equal(t, "2.0.0", version)
 }
 
-func TestGetNextVersionPatch(t *testing.T) {
-	gitAdapter := &gitDummyAdapter{
+func TestGetNextVersionMajorPrereleases(t *testing.T) {
+	now := time.Now()
+	gitService := git.New(&gitDummyAdapter{
 		tags: []*git.Tag{
-			git.NewTag("1.0.0", time.Now()),
+			git.NewTag("1.0.0-beta", &now),
 		},
-	}
-	repoAdapter := &repoDummyAdapter{
+	})
+	repoService := repo.New(&repoDummyAdapter{
+		prs: []*repo.PullRequest{
+			{
+				Number:   1,
+				Title:    "PR1",
+				Labels:   []string{"foo", "minor1"},
+				MergedAt: &now,
+			},
+			{
+				Number:   2,
+				Title:    "PR2",
+				Labels:   []string{"foo", "major2"},
+				MergedAt: &now,
+			},
+			{
+				Number:   3,
+				Title:    "PR3",
+				Labels:   []string{"foo", "minor1"},
+				MergedAt: &now,
+			},
+		},
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	old, version, err := service.GetNextVersion([]string{"main"}, true, false, false)
+	assert.Nil(t, err)
+	assert.Equal(t, "1.0.0-beta", old)
+	assert.Equal(t, "2.0.0", version)
+}
+
+func TestGetNextVersionPatch(t *testing.T) {
+	now := time.Now()
+	gitService := git.New(&gitDummyAdapter{
+		tags: []*git.Tag{
+			git.NewTag("1.0.0", &now),
+		},
+	})
+	repoService := repo.New(&repoDummyAdapter{
 		prs: []*repo.PullRequest{},
-	}
-	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	old, version, _, err := service.GetNextVersion([]string{"main"}, true, false)
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	old, version, err := service.GetNextVersion([]string{"main"}, true, false, true)
 	assert.Nil(t, err)
 	assert.Equal(t, "1.0.0", old)
 	assert.Equal(t, "1.0.1", version)
 }
 
 func TestCreateRelease(t *testing.T) {
-	gitAdapter := &gitDummyAdapter{
-		tags: []*git.Tag{
-			git.NewTag("v1.0.0", time.Now()),
-		},
-	}
 	now := time.Now()
+	now_1h := now.Add(1 * time.Hour)
+	now_2h := now.Add(2 * time.Hour)
+	gitService := git.New(&gitDummyAdapter{
+		tags: []*git.Tag{
+			git.NewTag("v1.0.0", &now_1h),
+		},
+	})
 	repoAdapter := &repoDummyAdapter{
 		prs: []*repo.PullRequest{
 			{
 				Number:   1,
 				Title:    "PR1",
-				Labels:   []string{"minor1", "bar"},
-				MergedAt: &now,
+				Labels:   []string{"minor", "minor1"},
+				MergedAt: &now_2h,
 			},
 			{
 				Number:   2,
 				Title:    "PR2",
 				Labels:   []string{"foo"},
-				MergedAt: &now,
+				MergedAt: &now_2h,
 			},
 		},
 	}
-	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	newTag, err := service.CreateNextRelease([]string{"main"}, false, false, "{{ range . }}- {{.Title}} (#{{.Number}})\n{{ end }}")
+	repoService := repo.New(repoAdapter)
+	service := New(NewDefaultConfig(), repoService, gitService)
+	newTag, err := service.CreateNextRelease([]string{"main"}, false, false, changelog.DefaultTemplateString, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(repoAdapter.releases))
 	r := repoAdapter.releases[0]
@@ -282,7 +322,17 @@ func TestCreateRelease(t *testing.T) {
 	assert.Equal(t, "v1.1.0", r.tagName)
 	assert.Equal(t, "v1.1.0", newTag)
 	assert.False(t, r.draft)
-	assert.Equal(t, "- PR1 (#1)\n- PR2 (#2)\n", r.body)
+	fmt.Println(r.body)
+	expected := `
+#### Added
+
+- PR1 [\#1]() ([]())
+
+#### Changed
+
+- PR2 [\#2]() ([]())	
+`
+	assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(r.body))
 }
 
 func TestGenerateChangelog(t *testing.T) {
@@ -320,18 +370,19 @@ func TestGenerateChangelog(t *testing.T) {
 
 - PR1 [\#1](https://foo.com/1) ([user4](https://foo.com/user4))
 `
-	now, err := time.Parse("2006-01-02", "2024-01-02")
-	assert.Nil(t, err)
+	now, _ := time.Parse("2006-01-02", "2024-01-02")
+	now_1h := now.Add(1 * time.Hour)
+	now_10h := now.Add(10 * time.Hour)
 	now5 := now.Add(5 * time.Hour)
 	now6 := now.Add(6 * time.Hour)
 	now20 := now.Add(20 * time.Hour)
-	gitAdapter := &gitDummyAdapter{
+	gitService := git.New(&gitDummyAdapter{
 		tags: []*git.Tag{
-			git.NewTag("1.0.0", now.Add(1*time.Hour)),
-			git.NewTag("2.0.0", now.Add(10*time.Hour)),
+			git.NewTag("1.0.0", &now_1h),
+			git.NewTag("2.0.0", &now_10h),
 		},
-	}
-	repoAdapter := &repoDummyAdapter{
+	})
+	repoService := repo.New(&repoDummyAdapter{
 		prs: []*repo.PullRequest{
 			{
 				Number:      4,
@@ -397,9 +448,9 @@ func TestGenerateChangelog(t *testing.T) {
 				AuthorUrl:   "https://foo.com/user8",
 			},
 		},
-	}
-	service := NewService(NewDefaultConfig(), repoAdapter, gitAdapter)
-	res, err := service.GenerateChangelog([]string{"main"}, true, true, "", changelog.DefaultTemplateString)
+	})
+	service := New(NewDefaultConfig(), repoService, gitService)
+	res, err := service.GenerateChangelog([]string{"main"}, true, true, "", changelog.DefaultTemplateString, true)
 	assert.Nil(t, err)
 	fmt.Println("**********")
 	fmt.Println(res)

@@ -1,6 +1,8 @@
 package repo
 
-import "time"
+import (
+	"time"
+)
 
 // PullRequest represents a pull request.
 type PullRequest struct {
@@ -26,6 +28,9 @@ func (pr *PullRequest) HasThisLabel(label string) bool {
 
 // HasOneOfTheseLabels returns true if the pull request has at least one of the given labels.
 func (pr *PullRequest) HasOneOfTheseLabels(labels []string) bool {
+	if pr.Labels == nil {
+		return false
+	}
 	for _, label := range pr.Labels {
 		for _, l := range labels {
 			if l == label {

@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app"
-	"github.com/fabien-marty/github-next-semantic-version/internal/app/changelog"
 	"github.com/urfave/cli/v2"
 )
 
@@ -18,18 +17,14 @@ func makeChangelogAction(cCtx *cli.Context) error {
 		return err
 	}
 	branches := getBranches(cCtx, service)
-	templateString := changelog.DefaultTemplateString
-	if cCtx.String("template-path") != "" {
-		templateStringBytes, err := os.ReadFile(cCtx.String("template-path"))
-		if err != nil {
-			return cli.Exit(fmt.Sprintf("Can't read the changelog template file: %s", err), 1)
-		}
-		templateString = string(templateStringBytes)
+	templateString, err := getTemplateString(cCtx)
+	if err != nil {
+		return err
 	}
 	if cCtx.String("starting-tag") == "LATEST" && !cCtx.Bool("future") {
 		return cli.Exit("LATEST is only compatible with --future", 1)
 	}
-	changelog, err := service.GenerateChangelog(branches, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("future"), cCtx.String("starting-tag"), templateString)
+	changelog, err := service.GenerateChangelog(branches, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("future"), cCtx.String("starting-tag"), templateString, cCtx.Bool("ignore-preleases"))
 	if err != nil {
 		if err == app.ErrNoRelease {
 			return cli.Exit(errors.New("no need to create a release => use --release-force if you want to force a version bump and a new release"), 2)

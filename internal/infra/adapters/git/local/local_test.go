@@ -13,7 +13,7 @@ func TestExtractGHRepoFromRemoteUrl(t *testing.T) {
 	owner, repo = extractGHRepoFromRemoteUrl("git@github.com:fabien-martygithub-next-semantic-version.git")
 	assert.Equal(t, "", owner)
 	assert.Equal(t, "", repo)
-	owner, repo = extractGHRepoFromRemoteUrl("FIXME")
+	owner, repo = extractGHRepoFromRemoteUrl("foobar")
 	assert.Equal(t, "", owner)
 	assert.Equal(t, "", repo)
 	owner, repo = extractGHRepoFromRemoteUrl("https://github.com/fabien-marty/github-next-semantic-version.git")

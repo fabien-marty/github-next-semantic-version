@@ -17,15 +17,11 @@ func createReleaseAction(cCtx *cli.Context) error {
 		return err
 	}
 	branches := getBranches(cCtx, service)
-	releaseBodyTemplate := cCtx.String("release-body-template")
-	if cCtx.String("release-body-template-path") != "" {
-		body, err := os.ReadFile(cCtx.String("release-body-template-path"))
-		if err != nil {
-			return cli.Exit(fmt.Sprintf("Can't read the release body template file: %s", err), 1)
-		}
-		releaseBodyTemplate = string(body)
+	templateString, err := getTemplateString(cCtx)
+	if err != nil {
+		return err
 	}
-	newTag, err := service.CreateNextRelease(branches, !cCtx.Bool("release-force"), cCtx.Bool("release-draft"), releaseBodyTemplate)
+	newTag, err := service.CreateNextRelease(branches, !cCtx.Bool("release-force"), cCtx.Bool("release-draft"), templateString, cCtx.Bool("ignore-prereleases"))
 	if err != nil {
 		if err == app.ErrNoRelease {
 			return cli.Exit(errors.New("no need to create a release => use --release-force if you want to force a version bump and a new release"), 2)
@@ -45,10 +41,10 @@ func CreateReleaseMain() {
 		EnvVars: []string{"GNSV_RELEASE_DRAFT"},
 	})
 	cliFlags = append(cliFlags, &cli.StringFlag{
-		Name:    "release-body-template",
-		Value:   "{{ range . }}- {{.Title}} (#{{.Number}})\n{{ end }}",
-		Usage:   "golang template to generate the release body",
-		EnvVars: []string{"GNSV_RELEASE_BODY_TEMPLATE"},
+		Name:    "template-path",
+		Value:   "",
+		Usage:   "if set, define the path to the changelog template",
+		EnvVars: []string{"GNSV_CHANGELOG_TEMPLATE_PATH"},
 	})
 	cliFlags = append(cliFlags, &cli.StringFlag{
 		Name:    "release-body-template-path",

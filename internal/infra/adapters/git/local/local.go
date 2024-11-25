@@ -151,7 +151,7 @@ func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
 	tagNames := r.getTagNamesOrDie(branch)
 	for _, tagName := range tagNames {
 		tagDate := r.getTagDateOrDie(tagName)
-		tag := git.NewTag(tagName, tagDate)
+		tag := git.NewTag(tagName, &tagDate)
 		res = append(res, tag)
 	}
 	return res, nil

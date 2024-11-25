@@ -10,9 +10,12 @@ import (
 )
 
 func TestNewChangelog(t *testing.T) {
-	tag1 := git.NewTag("v1.0.0", time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC))
-	tag2 := git.NewTag("v2.0.0", time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC))
-	tag3 := git.NewTag("v3.0.0", time.Date(2023, 3, 1, 0, 0, 0, 0, time.UTC))
+	t1 := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	t2 := time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)
+	t3 := time.Date(2023, 3, 1, 0, 0, 0, 0, time.UTC)
+	tag1 := git.NewTag("v1.0.0", &t1)
+	tag2 := git.NewTag("v2.0.0", &t2)
+	tag3 := git.NewTag("v3.0.0", &t3)
 
 	pr1 := &repo.PullRequest{MergedAt: &[]time.Time{time.Date(2023, 1, 15, 0, 0, 0, 0, time.UTC)}[0]}
 	pr2 := &repo.PullRequest{MergedAt: &[]time.Time{time.Date(2023, 2, 15, 0, 0, 0, 0, time.UTC)}[0]}
@@ -72,8 +75,10 @@ func TestNewChangelog(t *testing.T) {
 }
 
 func TestIsPullRequestIncludedInThisSegment(t *testing.T) {
-	tag1 := &git.Tag{Time: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)}
-	tag2 := &git.Tag{Time: time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)}
+	t1 := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	t2 := time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)
+	tag1 := &git.Tag{Time: &t1}
+	tag2 := &git.Tag{Time: &t2}
 
 	pr1 := &repo.PullRequest{MergedAt: &[]time.Time{time.Date(2023, 1, 15, 0, 0, 0, 0, time.UTC)}[0]}
 	pr2 := &repo.PullRequest{MergedAt: &[]time.Time{time.Date(2023, 2, 15, 0, 0, 0, 0, time.UTC)}[0]}

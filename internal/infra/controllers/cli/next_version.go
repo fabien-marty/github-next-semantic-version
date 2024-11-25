@@ -15,7 +15,7 @@ func nextVersionAction(cCtx *cli.Context) error {
 		return err
 	}
 	branches := getBranches(cCtx, service)
-	oldVersion, newVersion, _, err := service.GetNextVersion(branches, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("dont-increment-if-no-pr"))
+	oldVersion, newVersion, err := service.GetNextVersion(branches, !cCtx.Bool("consider-also-non-merged-prs"), cCtx.Bool("dont-increment-if-no-pr"), cCtx.Bool("ignore-prereleases"))
 	if err != nil {
 		return cli.Exit(err.Error(), 1)
 	}

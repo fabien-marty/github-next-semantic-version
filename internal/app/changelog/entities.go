@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	MinimalDelayInSeconds   int
-	Future                  bool
-	RepoOwner               string
-	RepoName                string
-	PullRequestIgnoreLabels []string
+	MinimalDelayInSeconds int
+	Future                bool
+	RepoOwner             string
+	RepoName              string
+	HideMainHeader        bool
+	HideSectionHeaders    bool
 }
 
 type Section struct {
@@ -22,9 +23,11 @@ type Section struct {
 }
 
 type Changelog struct {
-	Sections  []*Section
-	RepoOwner string // Repository owner name (organization)
-	RepoName  string // Repository name (without owner/organization part)
+	Sections           []*Section
+	RepoOwner          string // Repository owner name (organization)
+	RepoName           string // Repository name (without owner/organization part)
+	HideMainHeader     bool   // If true, don't display main header
+	HideSectionHeaders bool   // If true, don't display section headers
 }
 
 func (c *Changelog) ReversedSections() []*Section {
@@ -97,7 +100,7 @@ func isPullRequestIncludedInThisSegment(pr *repo.PullRequest, tag1 *git.Tag, tag
 	if tag1 != nil && pr.MergedAt.Before(tag1.Time.Add(time.Second*time.Duration(minimalDelayInSeconds))) {
 		return false
 	}
-	if tag2 == nil { //"future" tag
+	if tag2 == nil || tag2.Time == nil { //"future" tag
 		return true
 	}
 	if tag2.Time.Add(time.Second * time.Duration(minimalDelayInSeconds)).Before(*pr.MergedAt) {
@@ -129,8 +132,10 @@ func New(tags []*git.Tag, prs []*repo.PullRequest, config Config) *Changelog {
 		previousTag = tag
 	}
 	return &Changelog{
-		RepoOwner: config.RepoOwner,
-		RepoName:  config.RepoName,
-		Sections:  sections,
+		RepoOwner:          config.RepoOwner,
+		RepoName:           config.RepoName,
+		Sections:           sections,
+		HideMainHeader:     config.HideMainHeader,
+		HideSectionHeaders: config.HideSectionHeaders,
 	}
 }

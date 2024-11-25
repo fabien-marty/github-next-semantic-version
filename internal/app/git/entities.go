@@ -10,7 +10,7 @@ import (
 // Tag represents a git tag with its name, creation time and semantic version.
 type Tag struct {
 	Name   string          // tag name (without modification)
-	Time   time.Time       // commit time of the tag
+	Time   *time.Time      // commit time of the tag (nil means this is not a real tag)
 	Semver *semver.Version // semver version read from tag name (nil if the tag name is not in the expected format)
 	Prefix string          // Prefix read before the semver version
 }
@@ -20,7 +20,7 @@ type Tag struct {
 // if the tag name has a prefix "v", the prefix will be removed before parsing the version,
 // if the tag name is in the form foo/v1.2.3, the prefix part ("foo/") will be removed before parsing
 // If the name is not in the expected format, the Semver field of the returned Tag will be nil.
-func NewTag(name string, date time.Time) *Tag {
+func NewTag(name string, date *time.Time) *Tag {
 	if name == "" {
 		return nil
 	}
@@ -57,14 +57,25 @@ func (t1 *Tag) LessThan(t2 *Tag) bool {
 		return false
 	}
 	if t1.Semver.Equal(t2.Semver) {
-		return t1.Time.Before(t2.Time)
+		if t1.Time == nil {
+			return false
+		}
+		if t2.Time == nil {
+			return true
+		}
+		return t1.Time.Before(*t2.Time)
 	}
 	return t1.Semver.LessThan(t2.Semver)
 }
 
-// NewName returns the new name for the tag based on the provided new version.
-// If the current tag name has a prefix ("v"...), the new name will also have the same prefix.
-// Otherwise, the new name will not have any prefix.
-func (t *Tag) NewName(newVersion semver.Version) string {
-	return t.Prefix + newVersion.String()
+func NewTagIncrementingPatch(t *Tag) *Tag {
+	return NewTag(t.Prefix+t.Semver.IncPatch().String(), nil)
+}
+
+func NewTagIncrementingMinor(t *Tag) *Tag {
+	return NewTag(t.Prefix+t.Semver.IncMinor().String(), nil)
+}
+
+func NewTagIncrementingMajor(t *Tag) *Tag {
+	return NewTag(t.Prefix+t.Semver.IncMajor().String(), nil)
 }
