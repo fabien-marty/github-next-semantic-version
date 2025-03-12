@@ -49,16 +49,14 @@ func (r *Adapter) getPullRequestsSince(state state, base string, t *time.Time) (
 		listOptionsState = "closed"
 	}
 	listOptions := &gh.PullRequestListOptions{
-		State:     listOptionsState,
-		Base:      base,
-		Sort:      "updated",
-		Direction: "desc",
+		State: listOptionsState,
+		Base:  base,
 		ListOptions: gh.ListOptions{
-			Page: 1,
+			Page:    1,
+			PerPage: 100,
 		},
 	}
 	res := []*repo.PullRequest{}
-out:
 	for {
 		logger.Debug("fetching pull-requests...", slog.Int("page", listOptions.Page))
 		prs, resp, err := r.client.PullRequests.List(context.Background(), r.owner, r.repo, listOptions)
@@ -70,9 +68,6 @@ out:
 				continue
 			}
 			if state == "merged" {
-				if t != nil && pr.UpdatedAt.Before(*t) {
-					break out
-				}
 				if pr.MergedAt == nil {
 					continue
 				}
