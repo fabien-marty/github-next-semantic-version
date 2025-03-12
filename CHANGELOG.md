@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [v0.7.2](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.7.2) (2025-03-12)
+
+#### Fixed
+
+- drop an internal optimization because of gh bug [\#45](https://github.com/fabien-marty/github-next-semantic-version/pull/45) ([fabien-marty](https://github.com/fabien-marty))
+
+#### Changed
+
+- Bump golang.org/x/crypto from 0.26.0 to 0.31.0 [\#46](https://github.com/fabien-marty/github-next-semantic-version/pull/46) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.7.1...v0.7.2)</sub>
+
 ## [v0.7.1](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.7.1) (2024-11-14)
 
 #### Changed
