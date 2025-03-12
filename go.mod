@@ -28,8 +28,8 @@ require (
 	github.com/vlad-tokarev/sloggcp v0.0.0-20230820053939-1b7dbb8c7b58 // indirect
 	github.com/xrash/smetrics v0.0.0-20240312152122-5f08fbb34913 // indirect
 	github.com/ztrue/tracerr v0.4.0 // indirect
-	golang.org/x/crypto v0.26.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 )
 
 require (
