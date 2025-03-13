@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [v0.8.0](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.8.0) (2025-03-13)
+
+#### Added
+
+- introduction of a cache feature [\#48](https://github.com/fabien-marty/github-next-semantic-version/pull/48) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.7.2...v0.8.0)</sub>
+
 ## [v0.7.2](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.7.2) (2025-03-12)
 
 #### Fixed
