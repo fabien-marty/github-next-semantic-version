@@ -8,7 +8,9 @@ import (
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app"
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/git"
+	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
 	gitlocal "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/git/local"
+	repocache "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/repo/cache"
 	repogithub "github.com/fabien-marty/github-next-semantic-version/internal/infra/adapters/repo/github"
 	"github.com/fabien-marty/slog-helpers/pkg/slogc"
 	"github.com/urfave/cli/v2"
@@ -77,6 +79,24 @@ var commonCliFlags = []cli.Flag{
 		Name:  "minimal-delay-in-seconds",
 		Value: 5,
 		Usage: "Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR)",
+	},
+	&cli.BoolFlag{
+		Name:    "cache",
+		Value:   false,
+		Usage:   "Cache pull-requests read",
+		EnvVars: []string{"GNSV_CACHE"},
+	},
+	&cli.IntFlag{
+		Name:    "cache-lifetime",
+		Value:   3600,
+		Usage:   "Lifetime (in seconds) of the pull-requests cache",
+		EnvVars: []string{"GNSV_CACHE_LIFETIME"},
+	},
+	&cli.StringFlag{
+		Name:    "cache-location",
+		Value:   ".",
+		Usage:   "Cache Location (directory that must exist)",
+		EnvVars: []string{"GNSV_CACHE_LOCATION"},
 	},
 }
 
@@ -161,6 +181,13 @@ func getService(cCtx *cli.Context) (*app.Service, error) {
 	}
 	slog.Debug(fmt.Sprintf("Repository owner: %s, repository name: %s", repoOwner, repoName))
 	repoGithubAdapter := repogithub.NewAdapter(repoOwner, repoName, repogithub.AdapterOptions{Token: cCtx.String("github-token")})
+	var repoAdapter repo.Port = repoGithubAdapter
+	if cCtx.Bool("cache") {
+		repoAdapter = repocache.NewAdapter(repoOwner, repoName, repoGithubAdapter, repocache.AdapterOptions{
+			CacheLocation: cCtx.String("cache-location"),
+			CacheLifetime: cCtx.Int("cache-lifetime"),
+		})
+	}
 	appConfig := app.Config{
 		PullRequestMajorLabels:    specialSplit(cCtx.String("major-labels"), ","),
 		PullRequestMinorLabels:    specialSplit(cCtx.String("minor-labels"), ","),
@@ -171,7 +198,7 @@ func getService(cCtx *cli.Context) (*app.Service, error) {
 		RepoOwner:                 repoOwner,
 		RepoName:                  repoName,
 	}
-	service := app.NewService(appConfig, repoGithubAdapter, gitLocalAdapter)
+	service := app.NewService(appConfig, repoAdapter, gitLocalAdapter)
 	return service, nil
 }
 
