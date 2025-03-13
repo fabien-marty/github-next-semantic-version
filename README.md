@@ -101,6 +101,9 @@ GLOBAL OPTIONS:
    --ignore-labels value             Coma separated list of PR labels to consider as ignored PRs (OR condition) (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
    --must-have-labels value          Coma separated list of PR labels that PRs must have to be considered (OR condition, empty => no filtering) [$GNSV_MUST_HAVE_LABELS]
    --minimal-delay-in-seconds value  Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
+   --cache                           Cache pull-requests read (default: false) [$GNSV_CACHE]
+   --cache-lifetime value            Lifetime (in seconds) of the pull-requests cache (default: 3600) [$GNSV_CACHE_LIFETIME]
+   --cache-location value            Cache Location (directory that must exist) (default: ".") [$GNSV_CACHE_LOCATION]
    --major-labels value              Coma separated list of PR labels to consider as major (OR condition) (default: "major,breaking,Type: Major") [$GNSV_MAJOR_LABELS]
    --minor-labels value              Coma separated list of PR labels to consider as minor (OR condition) (default: "feature,Type: Feature,Type: Minor") [$GNSV_MINOR_LABELS]
    --dont-increment-if-no-pr         Don't increment the version if no PR is found (or if only ignored PRs found) (default: false) [$GNSV_DONT_INCREMENT_IF_NO_PR]
@@ -139,6 +142,9 @@ GLOBAL OPTIONS:
    --ignore-labels value               Coma separated list of PR labels to consider as ignored PRs (OR condition) (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
    --must-have-labels value            Coma separated list of PR labels that PRs must have to be considered (OR condition, empty => no filtering) [$GNSV_MUST_HAVE_LABELS]
    --minimal-delay-in-seconds value    Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
+   --cache                             Cache pull-requests read (default: false) [$GNSV_CACHE]
+   --cache-lifetime value              Lifetime (in seconds) of the pull-requests cache (default: 3600) [$GNSV_CACHE_LIFETIME]
+   --cache-location value              Cache Location (directory that must exist) (default: ".") [$GNSV_CACHE_LOCATION]
    --major-labels value                Coma separated list of PR labels to consider as major (OR condition) (default: "major,breaking,Type: Major") [$GNSV_MAJOR_LABELS]
    --minor-labels value                Coma separated list of PR labels to consider as minor (OR condition) (default: "feature,Type: Feature,Type: Minor") [$GNSV_MINOR_LABELS]
    --release-draft                     if set, the release is created in draft mode (default: false) [$GNSV_RELEASE_DRAFT]
@@ -179,6 +185,9 @@ GLOBAL OPTIONS:
    --ignore-labels value             Coma separated list of PR labels to consider as ignored PRs (OR condition) (default: "Type: Hidden") [$GNSV_HIDDEN_LABELS]
    --must-have-labels value          Coma separated list of PR labels that PRs must have to be considered (OR condition, empty => no filtering) [$GNSV_MUST_HAVE_LABELS]
    --minimal-delay-in-seconds value  Minimal delay in seconds between a PR and a tag (if less, we consider that the tag is always AFTER the PR) (default: 5)
+   --cache                           Cache pull-requests read (default: false) [$GNSV_CACHE]
+   --cache-lifetime value            Lifetime (in seconds) of the pull-requests cache (default: 3600) [$GNSV_CACHE_LIFETIME]
+   --cache-location value            Cache Location (directory that must exist) (default: ".") [$GNSV_CACHE_LOCATION]
    --future                          if set, include a future section (default: false) [$GNSV_CHANGELOG_FUTURE]
    --template-path value             if set, define the path to the changelog template [$GNSV_CHANGELOG_TEMPLATE_PATH]
    --starting-tag value              if set, defining a starting tag (excluded) for changelog generation, the special value 'LATEST' (combined with --future) will use the latest semantic tag to get only the future section [$GNSV_CHANGELOG_STARTING_TAG]
