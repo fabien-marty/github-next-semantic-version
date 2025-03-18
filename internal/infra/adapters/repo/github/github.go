@@ -42,8 +42,8 @@ func NewAdapter(owner string, repo string, opts AdapterOptions) *Adapter {
 	}
 }
 
-func (r *Adapter) getPullRequestsSince(state state, base string) ([]*repo.PullRequest, error) {
-	logger := slog.Default().With("base", base, "state", string(state))
+func (r *Adapter) getPullRequestsSince(state state, base string, t *time.Time) ([]*repo.PullRequest, error) {
+	logger := slog.Default().With("base", base, "state", string(state), "since", t)
 	listOptionsState := "open"
 	if state == merged {
 		listOptionsState = "closed"
@@ -69,6 +69,9 @@ func (r *Adapter) getPullRequestsSince(state state, base string) ([]*repo.PullRe
 			}
 			if state == "merged" {
 				if pr.MergedAt == nil {
+					continue
+				}
+				if t != nil && pr.MergedAt.GetTime().Before(*t) {
 					continue
 				}
 			}
@@ -103,15 +106,15 @@ func (r *Adapter) getPullRequestsSince(state state, base string) ([]*repo.PullRe
 	return res, nil
 }
 
-func (r *Adapter) GetPullRequestsSince(base string, onlyMerged bool) (res []*repo.PullRequest, err error) {
+func (r *Adapter) GetPullRequestsSince(base string, t *time.Time, onlyMerged bool) (res []*repo.PullRequest, err error) {
 	if onlyMerged {
-		return r.getPullRequestsSince(merged, base)
+		return r.getPullRequestsSince(merged, base, t)
 	}
-	opened, err := r.getPullRequestsSince(open, base)
+	opened, err := r.getPullRequestsSince(open, base, t)
 	if err != nil {
 		return nil, err
 	}
-	merged, err := r.getPullRequestsSince(merged, base)
+	merged, err := r.getPullRequestsSince(merged, base, t)
 	if err != nil {
 		return nil, err
 	}

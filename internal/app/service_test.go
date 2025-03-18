@@ -45,7 +45,7 @@ type repoDummyAdapter struct {
 	releases []release
 }
 
-func (d *repoDummyAdapter) GetPullRequestsSince(base string, onlyMerged bool) ([]*repo.PullRequest, error) {
+func (d *repoDummyAdapter) GetPullRequestsSince(base string, t *time.Time, onlyMerged bool) ([]*repo.PullRequest, error) {
 	return d.prs, nil
 }
 

@@ -75,18 +75,18 @@ func NewAdapter(owner string, repo string, upstreamAdapter repo.Port, opts Adapt
 	}
 }
 
-func (r *Adapter) getCacheFilePath(base string, onlyMerged bool) string {
+func (r *Adapter) getCacheFilePath(base string, since *time.Time, onlyMerged bool) string {
 	h := sha256.New()
-	key := fmt.Sprintf("%d-%s/%s-%s-%t", cacheVersion, r.owner, r.repo, base, onlyMerged)
+	key := fmt.Sprintf("%d-%s/%s-%s-%s-%t", cacheVersion, r.owner, r.repo, base, since, onlyMerged)
 	h.Write([]byte(key))
 	return filepath.Join(r.opts.CacheLocation, fmt.Sprintf("%x.cache", (h.Sum(nil))))
 }
 
-func (r *Adapter) GetPullRequestsSince(base string, onlyMerged bool) (res []*repo.PullRequest, err error) {
+func (r *Adapter) GetPullRequestsSince(base string, since *time.Time, onlyMerged bool) (res []*repo.PullRequest, err error) {
 	if !r.IsEnabled() {
-		return r.upstreamAdapter.GetPullRequestsSince(base, onlyMerged)
+		return r.upstreamAdapter.GetPullRequestsSince(base, since, onlyMerged)
 	}
-	cacheFilePath := r.getCacheFilePath(base, onlyMerged)
+	cacheFilePath := r.getCacheFilePath(base, since, onlyMerged)
 	logger := slog.Default().With(slog.String("cacheFilePath", cacheFilePath))
 	info, err := os.Stat(cacheFilePath)
 	if err == nil {
@@ -115,7 +115,7 @@ func (r *Adapter) GetPullRequestsSince(base string, onlyMerged bool) (res []*rep
 		}
 	}
 	logger.Debug("cache miss")
-	res, err = r.upstreamAdapter.GetPullRequestsSince(base, onlyMerged)
+	res, err = r.upstreamAdapter.GetPullRequestsSince(base, since, onlyMerged)
 	if err != nil {
 		return res, err
 	}

@@ -102,12 +102,13 @@ func (s *Service) getContainedTags(branches []string, since *time.Time) ([]*git.
 // (the list from the adapter is optionally filtered by the PullRequestIgnoreLabels configuration)
 // the returned slice is sorted by (ascending) mergedAt
 func (s *Service) getPullRequestsSingleBranch(branch string, since *time.Time, onlyMerged bool) ([]*repo.PullRequest, error) {
-	prs, err := s.RepoAdapter.GetPullRequestsSince(branch, onlyMerged)
+	prs, err := s.RepoAdapter.GetPullRequestsSince(branch, since, onlyMerged)
 	prs = slices.DeleteFunc(prs, func(pr *repo.PullRequest) bool {
-		mergedAt := pr.MergedAt
-		if since != nil && mergedAt != nil && mergedAt.Before(*since) {
-			return true
-		}
+		// FABFIX: remove?
+		// mergedAt := pr.MergedAt
+		//if since != nil && mergedAt != nil && mergedAt.Before(*since) {
+		//	return true
+		//}
 		if pr.IsIgnored(s.Config.PullRequestIgnoreLabels) {
 			s.logger.Debug("the pr has an ignored label", slog.Int("number", pr.Number))
 			return true

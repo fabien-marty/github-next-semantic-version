@@ -22,7 +22,7 @@ type repoDummyAdapter struct {
 	getPullRequestsSinceCalled bool
 }
 
-func (d *repoDummyAdapter) GetPullRequestsSince(base string, onlyMerged bool) ([]*repo.PullRequest, error) {
+func (d *repoDummyAdapter) GetPullRequestsSince(base string, since *time.Time, onlyMerged bool) ([]*repo.PullRequest, error) {
 	d.getPullRequestsSinceCalled = true
 	return d.prs, nil
 }
@@ -64,20 +64,26 @@ func TestCacheGetPR(t *testing.T) {
 	}()
 	upstreamAdapter := &repoDummyAdapter{}
 	adapter := NewAdapter("owner", "repo", upstreamAdapter, AdapterOptions{CacheLocation: "./tmp"})
-	res, err := adapter.GetPullRequestsSince("base", false) // should cache miss
+	res, err := adapter.GetPullRequestsSince("base", nil, false) // should cache miss
 	assert.Nil(t, err)
 	assert.Equal(t, len(res), 0)
 	assert.True(t, upstreamAdapter.getPullRequestsSinceCalled)
 	upstreamAdapter.getPullRequestsSinceCalled = false
-	res, err = adapter.GetPullRequestsSince("base", false) // should cache hit
+	res, err = adapter.GetPullRequestsSince("base", nil, false) // should cache hit
 	assert.Nil(t, err)
 	assert.Equal(t, len(res), 0)
 	assert.False(t, upstreamAdapter.getPullRequestsSinceCalled)
-	res, err = adapter.GetPullRequestsSince("base", true) // should cache miss (not the same parameters)
+	now := time.Now()
+	res, err = adapter.GetPullRequestsSince("base", &now, false) // should cache miss (not the same parameters)
 	assert.Nil(t, err)
 	assert.Equal(t, len(res), 0)
 	assert.True(t, upstreamAdapter.getPullRequestsSinceCalled)
-	upstreamAdapter.getPullRequestsSinceCalled = true
+	upstreamAdapter.getPullRequestsSinceCalled = false
+	res, err = adapter.GetPullRequestsSince("base", &now, false) // should cache hit
+	assert.Nil(t, err)
+	assert.Equal(t, len(res), 0)
+	assert.False(t, upstreamAdapter.getPullRequestsSinceCalled)
+	upstreamAdapter.getPullRequestsSinceCalled = false
 }
 
 func TestCacheGetPR2(t *testing.T) {
@@ -92,13 +98,13 @@ func TestCacheGetPR2(t *testing.T) {
 	pr4 := &repo.PullRequest{MergedAt: nil} // not merged PR
 	upstreamAdapter := &repoDummyAdapter{prs: []*repo.PullRequest{pr1, pr2, pr2bis, pr3, pr4}}
 	adapter := NewAdapter("owner", "repo", upstreamAdapter, AdapterOptions{CacheLocation: "./tmp2"})
-	res, err := adapter.GetPullRequestsSince("base", false) // should cache miss
+	res, err := adapter.GetPullRequestsSince("base", nil, false) // should cache miss
 	assert.Nil(t, err)
 	assert.Equal(t, len(res), 5)
 	assert.True(t, upstreamAdapter.getPullRequestsSinceCalled)
 	assert.Equal(t, res[3].MergedAt.Year(), 2023)
 	upstreamAdapter.getPullRequestsSinceCalled = false
-	res, err = adapter.GetPullRequestsSince("base", false) // should cache hit
+	res, err = adapter.GetPullRequestsSince("base", nil, false) // should cache hit
 	assert.Nil(t, err)
 	assert.Equal(t, len(res), 5)
 	assert.False(t, upstreamAdapter.getPullRequestsSinceCalled)
