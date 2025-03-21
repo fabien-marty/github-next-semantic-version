@@ -1,13 +1,14 @@
 module github.com/fabien-marty/github-next-semantic-version
 
-go 1.21.7
+go 1.23.0
 
-toolchain go1.21.11
+toolchain go1.23.7
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/fabien-marty/slog-helpers v0.0.0-20240624063600-773d61849b89
+	github.com/google/go-github/v70 v70.0.0
 	github.com/stretchr/testify v1.9.0
 )
 
@@ -34,7 +35,6 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/google/go-github/v62 v62.0.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/relvacode/iso8601 v1.4.0
 	github.com/urfave/cli/v2 v2.27.2
