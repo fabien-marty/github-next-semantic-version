@@ -3,10 +3,11 @@ package repogithub
 import (
 	"context"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
-	gh "github.com/google/go-github/v62/github"
+	gh "github.com/google/go-github/v70/github"
 )
 
 var _ repo.Port = &Adapter{}
@@ -42,8 +43,39 @@ func NewAdapter(owner string, repo string, opts AdapterOptions) *Adapter {
 	}
 }
 
-func (r *Adapter) getPullRequestsSince(state state, base string, t *time.Time) ([]*repo.PullRequest, error) {
-	logger := slog.Default().With("base", base, "state", string(state), "since", t)
+func (r *Adapter) createPullRequestFromGhPr(pr *gh.PullRequest) *repo.PullRequest {
+	if pr.Number == nil || pr.Title == nil || pr.UpdatedAt == nil || pr.CreatedAt == nil || pr.HTMLURL == nil || pr.Head == nil || pr.Head.Ref == nil || pr.User == nil || pr.User.Login == nil || pr.User.HTMLURL == nil {
+		return nil
+	}
+	labels := []string{}
+	for _, label := range pr.Labels {
+		if label.Name == nil {
+			continue
+		}
+		labels = append(labels, *label.Name)
+	}
+	var mergedAt *time.Time
+	if pr.MergedAt != nil {
+		mergedAt = pr.MergedAt.GetTime()
+	}
+	var updatedAt *time.Time
+	if pr.UpdatedAt != nil {
+		updatedAt = pr.UpdatedAt.GetTime()
+	}
+	return &repo.PullRequest{
+		Number:      *pr.Number,
+		Title:       *pr.Title,
+		MergedAt:    mergedAt,
+		UpdatedAt:   updatedAt,
+		Labels:      labels,
+		Branch:      *pr.Head.Ref,
+		Url:         *pr.HTMLURL,
+		AuthorLogin: *pr.User.Login,
+		AuthorUrl:   *pr.User.HTMLURL,
+	}
+}
+
+func (r *Adapter) getPullRequestsSince(state state, base string, sort string, usePagination bool) ([]*repo.PullRequest, error) {
 	listOptionsState := "open"
 	if state == merged {
 		listOptionsState = "closed"
@@ -51,53 +83,32 @@ func (r *Adapter) getPullRequestsSince(state state, base string, t *time.Time) (
 	listOptions := &gh.PullRequestListOptions{
 		State: listOptionsState,
 		Base:  base,
+		Sort:  sort,
 		ListOptions: gh.ListOptions{
 			Page:    1,
 			PerPage: 100,
 		},
 	}
+	logger := slog.Default().With("base", base, "state", string(state), "sort", sort, "page", 1)
 	res := []*repo.PullRequest{}
 	for {
-		logger.Debug("fetching pull-requests...", slog.Int("page", listOptions.Page))
+		logger := logger.With("page", listOptions.Page)
+		logger.Debug("fetching pull-requests...")
 		prs, resp, err := r.client.PullRequests.List(context.Background(), r.owner, r.repo, listOptions)
 		if err != nil {
 			return nil, err
 		}
 		for _, pr := range prs {
-			if pr.Number == nil || pr.Title == nil || pr.UpdatedAt == nil || pr.CreatedAt == nil || pr.HTMLURL == nil || pr.Head == nil || pr.Head.Ref == nil || pr.User == nil || pr.User.Login == nil || pr.User.HTMLURL == nil {
+			pro := r.createPullRequestFromGhPr(pr)
+			if pro == nil {
 				continue
 			}
-			if state == "merged" {
-				if pr.MergedAt == nil {
-					continue
-				}
-				if t != nil && pr.MergedAt.GetTime().Before(*t) {
-					continue
-				}
+			if state == "merged" && pro.MergedAt == nil {
+				continue
 			}
-			labels := []string{}
-			for _, label := range pr.Labels {
-				if label.Name == nil {
-					continue
-				}
-				labels = append(labels, *label.Name)
-			}
-			var mergedAt *time.Time
-			if pr.MergedAt != nil {
-				mergedAt = pr.MergedAt.GetTime()
-			}
-			res = append(res, &repo.PullRequest{
-				Number:      *pr.Number,
-				Title:       *pr.Title,
-				MergedAt:    mergedAt,
-				Labels:      labels,
-				Branch:      *pr.Head.Ref,
-				Url:         *pr.HTMLURL,
-				AuthorLogin: *pr.User.Login,
-				AuthorUrl:   *pr.User.HTMLURL,
-			})
+			res = append(res, pro)
 		}
-		if resp.NextPage == 0 {
+		if !usePagination || resp.NextPage == 0 {
 			break
 		}
 		listOptions.Page = resp.NextPage
@@ -106,15 +117,49 @@ func (r *Adapter) getPullRequestsSince(state state, base string, t *time.Time) (
 	return res, nil
 }
 
-func (r *Adapter) GetPullRequestsSince(base string, t *time.Time, onlyMerged bool) (res []*repo.PullRequest, err error) {
-	if onlyMerged {
-		return r.getPullRequestsSince(merged, base, t)
+func sortPRByUpdatedAt(a, b *repo.PullRequest) int {
+	if (a == nil) || (b == nil) {
+		panic("can't be nil")
 	}
-	opened, err := r.getPullRequestsSince(open, base, t)
+	if (a.UpdatedAt == nil) || (b.UpdatedAt == nil) {
+		panic("UpdateAt can't be nil")
+	}
+	if a.UpdatedAt.Before(*b.UpdatedAt) {
+		return -1
+	} else {
+		return 1
+	}
+}
+
+func (r *Adapter) GetLastUpdatedPullRequests(base string, onlyMerged bool) ([]*repo.PullRequest, error) {
+	if onlyMerged {
+		return r.getPullRequestsSince(merged, base, "updated", false)
+	}
+	opened, err := r.getPullRequestsSince(open, base, "updated", false)
 	if err != nil {
 		return nil, err
 	}
-	merged, err := r.getPullRequestsSince(merged, base, t)
+	merged, err := r.getPullRequestsSince(merged, base, "updated", false)
+	if err != nil {
+		return nil, err
+	}
+	tmp := []*repo.PullRequest{}
+	tmp = append(tmp, opened...)
+	tmp = append(tmp, merged...)
+	slices.SortFunc(tmp, sortPRByUpdatedAt)
+	slices.Reverse(tmp)
+	return tmp, nil
+}
+
+func (r *Adapter) GetPullRequests(base string, onlyMerged bool) (res []*repo.PullRequest, err error) {
+	if onlyMerged {
+		return r.getPullRequestsSince(merged, base, "created", true)
+	}
+	opened, err := r.getPullRequestsSince(open, base, "created", true)
+	if err != nil {
+		return nil, err
+	}
+	merged, err := r.getPullRequestsSince(merged, base, "created", true)
 	if err != nil {
 		return nil, err
 	}

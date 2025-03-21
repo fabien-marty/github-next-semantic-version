@@ -3,14 +3,18 @@ package repocache
 import (
 	"crypto/sha256"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
 )
+
+var cacheMissErr error = errors.New("cache miss")
 
 const cacheVersion = 1
 
@@ -75,67 +79,152 @@ func NewAdapter(owner string, repo string, upstreamAdapter repo.Port, opts Adapt
 	}
 }
 
-func (r *Adapter) getCacheFilePath(base string, since *time.Time, onlyMerged bool) string {
+func (r *Adapter) getCacheFilePath(base string, onlyMerged bool) string {
 	h := sha256.New()
-	key := fmt.Sprintf("%d-%s/%s-%s-%s-%t", cacheVersion, r.owner, r.repo, base, since, onlyMerged)
+	key := fmt.Sprintf("%d-%s/%s-%s-%t", cacheVersion, r.owner, r.repo, base, onlyMerged)
 	h.Write([]byte(key))
 	return filepath.Join(r.opts.CacheLocation, fmt.Sprintf("%x.cache", (h.Sum(nil))))
 }
 
-func (r *Adapter) GetPullRequestsSince(base string, since *time.Time, onlyMerged bool) (res []*repo.PullRequest, err error) {
-	if !r.IsEnabled() {
-		return r.upstreamAdapter.GetPullRequestsSince(base, since, onlyMerged)
-	}
-	cacheFilePath := r.getCacheFilePath(base, since, onlyMerged)
+func (r *Adapter) getPullRequestsFromCache(base string, onlyMerged bool) (res []*repo.PullRequest, err error) {
+	cacheFilePath := r.getCacheFilePath(base, onlyMerged)
 	logger := slog.Default().With(slog.String("cacheFilePath", cacheFilePath))
 	info, err := os.Stat(cacheFilePath)
-	if err == nil {
-		if time.Since(info.ModTime()) <= time.Duration(r.opts.CacheLifetime*int(time.Second)) {
-			file, err2 := os.Open(cacheFilePath)
-			if err2 != nil {
-				logger.Warn("can't open the cache file => cache disabled", slog.String("err", err.Error()))
-			} else {
-				defer file.Close()
-				decoder := gob.NewDecoder(file)
-				res = []*repo.PullRequest{}
-				err2 = decoder.Decode(&res)
-				if err2 != nil {
-					logger.Warn("can't decode the cache file => cache disabled", slog.String("err", err.Error()))
-				} else {
-					logger.Debug("cache hit")
-					return res, nil
-				}
-			}
-		} else {
-			logger.Debug("expired cache")
-			err2 := os.Remove(cacheFilePath)
-			if err2 != nil {
-				logger.Warn("can't delete expired cache file")
-			}
-		}
-	}
-	logger.Debug("cache miss")
-	res, err = r.upstreamAdapter.GetPullRequestsSince(base, since, onlyMerged)
 	if err != nil {
-		return res, err
+		return nil, cacheMissErr
 	}
+	if time.Since(info.ModTime()) > time.Duration(r.opts.CacheLifetime*int(time.Second)) {
+		logger.Debug("expired cache")
+		err2 := os.Remove(cacheFilePath)
+		if err2 != nil {
+			logger.Warn("can't delete expired cache file")
+		}
+		return nil, cacheMissErr
+	}
+	file, err2 := os.Open(cacheFilePath)
+	if err2 != nil {
+		logger.Warn("can't open the cache file", slog.String("err", err.Error()))
+		return nil, cacheMissErr
+	}
+	defer file.Close()
+	decoder := gob.NewDecoder(file)
+	res = []*repo.PullRequest{}
+	err2 = decoder.Decode(&res)
+	if err2 != nil {
+		logger.Warn("can't decode the cache file", slog.String("err", err.Error()))
+		return nil, cacheMissErr
+	}
+	logger.Debug("cache hit")
+	return res, nil
+}
+
+func (r *Adapter) saveCache(base string, onlyMerged bool, res []*repo.PullRequest) {
+	cacheFilePath := r.getCacheFilePath(base, onlyMerged)
+	logger := slog.Default().With(slog.String("cacheFilePath", cacheFilePath))
 	file, err := os.Create(cacheFilePath)
 	if err != nil {
 		logger.Warn("can't create the cache file => cache disabled")
-		return res, nil
+		return
 	}
 	defer file.Close()
 	encoder := gob.NewEncoder(file)
 	err = encoder.Encode(res)
 	if err != nil {
 		logger.Warn("can't encode the context of the cache file => cache disabled")
-		return res, nil
+		return
 	}
 	logger.Debug("cache saved")
+}
+
+func sortPRByUpdatedAt(a, b *repo.PullRequest) int {
+	if (a == nil) || (b == nil) {
+		panic("can't be nil")
+	}
+	if (a.UpdatedAt == nil) || (b.UpdatedAt == nil) {
+		panic("UpdateAt can't be nil")
+	}
+	if a.UpdatedAt.Before(*b.UpdatedAt) {
+		return -1
+	} else {
+		return 1
+	}
+}
+
+func (r *Adapter) GetPullRequests(base string, onlyMerged bool) (res []*repo.PullRequest, err error) {
+	logger := slog.Default().With(slog.String("base", base), slog.Bool("onlyMerged", onlyMerged))
+	if !r.IsEnabled() {
+		return r.upstreamAdapter.GetPullRequests(base, onlyMerged)
+	}
+	cachedPrs, err := r.getPullRequestsFromCache(base, onlyMerged)
+	if err != nil {
+		// cache miss
+		res, err = r.upstreamAdapter.GetPullRequests(base, onlyMerged)
+		if err == nil {
+			r.saveCache(base, onlyMerged, res)
+		}
+		return res, err
+	}
+	// cache hit
+	updatedPrs, err2 := r.GetLastUpdatedPullRequests(base, onlyMerged)
+	if err2 != nil {
+		return nil, err2
+	}
+	if len(cachedPrs) == 0 || len(updatedPrs) == 0 {
+		logger.Debug("len(cachedPrs) == 0 || len(updatedPrs) == 0 => bypass cache")
+		return r.upstreamAdapter.GetPullRequests(base, onlyMerged)
+	}
+	slices.SortFunc(updatedPrs, sortPRByUpdatedAt)
+	leastUpdatedPr := updatedPrs[0]
+	if leastUpdatedPr == nil || leastUpdatedPr.UpdatedAt == nil {
+		panic("leastUpdatedPr is nil or has no UpdatedAt")
+	}
+	logger.Debug("leastUpdatedPr (in first page)", slog.Int("number", leastUpdatedPr.Number), slog.Time("updatedAt", *leastUpdatedPr.UpdatedAt))
+	useCache := false
+	for _, pr := range cachedPrs {
+		if pr.Number == leastUpdatedPr.Number {
+			if pr.UpdatedAt == nil {
+				panic("UpdatedAt is nil")
+			}
+			if (*pr.UpdatedAt).Compare(*leastUpdatedPr.UpdatedAt) == 0 {
+				logger.Debug("found a cached pr with the same number and the same updatedAt => let's continue to use the cache")
+				useCache = true
+			} else {
+				logger.Debug("found a cached pr with the same number but a different updatedAt => bypass the cache")
+			}
+			break
+		}
+	}
+	if !useCache {
+		res, err = r.upstreamAdapter.GetPullRequests(base, onlyMerged)
+		if err != nil {
+			r.saveCache(base, onlyMerged, res)
+		}
+		return res, err
+	}
+	tmp := map[int]*repo.PullRequest{}
+	for _, pr := range updatedPrs {
+		tmp[pr.Number] = pr
+	}
+	for _, pr := range cachedPrs {
+		_, ok := tmp[pr.Number]
+		if !ok {
+			tmp[pr.Number] = pr
+		}
+	}
+	for _, pr := range tmp {
+		res = append(res, pr)
+	}
+	r.saveCache(base, onlyMerged, res)
 	return res, nil
 }
 
+func (r *Adapter) GetLastUpdatedPullRequests(base string, onlyMerged bool) ([]*repo.PullRequest, error) {
+	// pass-through
+	return r.upstreamAdapter.GetLastUpdatedPullRequests(base, onlyMerged)
+}
+
 func (r *Adapter) CreateRelease(base string, tagName string, body string, draft bool) error {
+	// pass-through
 	return r.upstreamAdapter.CreateRelease(base, tagName, body, draft)
 }
 

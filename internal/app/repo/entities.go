@@ -7,6 +7,7 @@ type PullRequest struct {
 	Number      int        // pull request number
 	Title       string     // pull request title
 	MergedAt    *time.Time // pull request merge date (nil if not merged)
+	UpdatedAt   *time.Time // pull request updated date (code, label...)
 	Labels      []string   // pull request labels
 	Branch      string     // pull request branch
 	Url         string     // pull request url
