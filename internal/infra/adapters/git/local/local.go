@@ -117,7 +117,7 @@ func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
 	r.cwdOrDie()
 
 	logger := slog.Default().With("branch", branch)
-	args := []string{"for-each-ref", "--sort=taggerdate", "--format=%(tag)~~~%(taggerdate:iso-strict)", "refs/tags"}
+	args := []string{"for-each-ref", "--sort=taggerdate", "--format=%(refname:short)~~~%(creatordate:iso-strict)", "refs/tags"}
 	if branch != "" {
 		args = append(args, "--merged", "refs/remotes/"+r.opts.OriginBranchName+"/"+branch)
 	}
@@ -126,10 +126,6 @@ func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if len(line) < 15 {
-			// not sure why we have some empty lines here
-			continue
-		}
 		parts := strings.Split(line, "~~~")
 		if len(parts) != 2 {
 			logger.Warn("can't parse a tag line => ignoring it", slog.String("line", line))
