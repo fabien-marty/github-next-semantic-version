@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/relvacode/iso8601"
 
@@ -89,38 +88,6 @@ func (r *Adapter) executeCmdOrDie(logger *slog.Logger, cmd *exec.Cmd) string {
 	return string(output)
 }
 
-func (r *Adapter) getTagNamesOrDie(branch string) []string {
-	logger := slog.Default().With("branch", branch, "gitOperation", "getTagNames")
-	args := []string{"tag"}
-	if branch != "" {
-		args = append(args, "--merged", "refs/remotes/"+r.opts.OriginBranchName+"/"+branch)
-	}
-	cmd := exec.Command("git", args...)
-	output := r.executeCmdOrDie(logger, cmd)
-	res := []string{}
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	for scanner.Scan() {
-		res = append(res, strings.TrimSpace(scanner.Text()))
-	}
-	return res
-}
-
-func (r *Adapter) getTagDateOrDie(tagName string) time.Time {
-	logger := slog.Default().With("tagName", tagName, "gitOperation", "getTagDate")
-	cmd := exec.Command("git", "show", "-s", "--format=%cI", "refs/tags/"+tagName)
-	output := strings.TrimSpace(r.executeCmdOrDie(logger, cmd))
-	if len(strings.TrimSpace(output)) == 0 {
-		logger.Error("can't get the date of the tag: empty")
-		os.Exit(1)
-	}
-	tagDate, err := iso8601.ParseString(lastLine(output))
-	if err != nil {
-		logger.Error("can't parse the date of the tag", slog.String("err", err.Error()))
-		os.Exit(1)
-	}
-	return tagDate
-}
-
 func (r *Adapter) GuessGHRepo() (owner string, repo string) {
 	logger := slog.Default().With("gitOperation", "guessRepoOwner")
 	r.cwdOrDie()
@@ -148,9 +115,32 @@ func (r *Adapter) GuessDefaultBranch() string {
 func (r *Adapter) GetContainedTags(branch string) ([]*git.Tag, error) {
 	res := []*git.Tag{}
 	r.cwdOrDie()
-	tagNames := r.getTagNamesOrDie(branch)
-	for _, tagName := range tagNames {
-		tagDate := r.getTagDateOrDie(tagName)
+
+	logger := slog.Default().With("branch", branch)
+	args := []string{"for-each-ref", "--sort=taggerdate", "--format=%(tag)~~~%(taggerdate:iso-strict)", "refs/tags"}
+	if branch != "" {
+		args = append(args, "--merged", "refs/remotes/"+r.opts.OriginBranchName+"/"+branch)
+	}
+	cmd := exec.Command("git", args...)
+	output := r.executeCmdOrDie(logger, cmd)
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if len(line) < 15 {
+			// not sure why we have some empty lines here
+			continue
+		}
+		parts := strings.Split(line, "~~~")
+		if len(parts) != 2 {
+			logger.Warn("can't parse a tag line => ignoring it", slog.String("line", line))
+			continue
+		}
+		tagName := parts[0]
+		tagDate, err := iso8601.ParseString(parts[1])
+		if err != nil {
+			logger.Warn("can't parse the date of the tag => ignoring it", slog.String("tagName", tagName), slog.String("date", parts[1]), slog.String("err", err.Error()))
+			continue
+		}
 		tag := git.NewTag(tagName, tagDate)
 		res = append(res, tag)
 	}
