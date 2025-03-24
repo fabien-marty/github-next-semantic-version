@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [v0.9.2](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.9.2) (2025-03-24)
+
+#### Changed
+
+- update dependencies and go version [\#55](https://github.com/fabien-marty/github-next-semantic-version/pull/55) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.9.1...v0.9.2)</sub>
+
 ## [v0.9.1](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.9.1) (2025-03-21)
 
 #### Fixed
