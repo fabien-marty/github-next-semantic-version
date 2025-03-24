@@ -49,7 +49,7 @@ lint: govet gofmt golangcilint ## Lint the code (also fix the code if FIX=1, def
 
 tmp/bin/golangci-lint:
 	@mkdir -p tmp/bin
-	cd tmp/bin && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b . v1.56.2 && chmod +x `basename $@`
+	cd tmp/bin && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b . v1.64.8 && chmod +x `basename $@`
 
 .PHONY: clean
 clean: _cmd_clean ## Clean the repo

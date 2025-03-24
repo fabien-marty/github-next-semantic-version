@@ -37,7 +37,7 @@ jobs:
           fetch-tags: true
       - uses: actions/setup-go@v4
         with:
-          go-version: "1.21"
+          go-version: "1.23"
       - id: create-release
         uses: fabien-marty/github-create-next-semantic-release-action@main
         with:
@@ -65,7 +65,7 @@ jobs:
           fetch-tags: true
       - uses: actions/setup-go@v4
         with:
-          go-version: "1.21"
+          go-version: "1.23"
       - name: "Build"
         run: |
           make build
