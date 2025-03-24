@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [v0.9.1](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.9.1) (2025-03-21)
+
+#### Fixed
+
+- fix tags reading [\#53](https://github.com/fabien-marty/github-next-semantic-version/pull/53) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.9.0...v0.9.1)</sub>
+
+## [v0.9.0](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.9.0) (2025-03-21)
+
+#### Changed
+
+- improve tag reading [\#50](https://github.com/fabien-marty/github-next-semantic-version/pull/50) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.8.0...v0.9.0)</sub>
+
 ## [v0.8.0](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.8.0) (2025-03-13)
 
 #### Added
