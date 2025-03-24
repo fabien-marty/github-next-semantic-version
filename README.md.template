@@ -111,10 +111,10 @@ $ github-generate-changelog --help
 
 ## DEV
 
-This tool is fully developped in Golang 1.21+ with following libraries:
+This tool is fully developped in Golang 1.23+ with following libraries:
 
 - [github.com/Masterminds/semver V3](https://github.com/Masterminds/semver/): for semver parsing
-- [github.com/google/go-github V62](https://github.com/google/go-github/): for GitHub API 
+- [github.com/google/go-github V70](https://github.com/google/go-github/): for GitHub API 
 - [github.com/urfave/cli V2](https://github.com/urfave/cli/): for CLI
 
 We follow [golang-standards/project-layout](https://github.com/golang-standards/project-layout) directories structure
