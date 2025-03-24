@@ -102,7 +102,7 @@ var commonCliFlags = []cli.Flag{
 		Name:    "cache-dont-try-to-update",
 		Value:   false,
 		Usage:   "If set, don't try to update the cache (use it only if you know what you are doing)",
-		EnvVars: []string{"GNSV_CACHE_DONT_TYPE_TO_UPDATE"},
+		EnvVars: []string{"GNSV_CACHE_DONT_TRY_TO_UPDATE"},
 	},
 }
 
