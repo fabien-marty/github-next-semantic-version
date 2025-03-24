@@ -102,7 +102,7 @@ func (s *Service) getContainedTags(branches []string, since *time.Time) ([]*git.
 // (the list from the adapter is optionally filtered by the PullRequestIgnoreLabels configuration)
 // the returned slice is sorted by (ascending) mergedAt
 func (s *Service) getPullRequestsSingleBranch(branch string, since *time.Time, onlyMerged bool) ([]*repo.PullRequest, error) {
-	prs, err := s.RepoAdapter.GetPullRequestsSince(branch, onlyMerged)
+	prs, err := s.RepoAdapter.GetPullRequests(branch, onlyMerged)
 	prs = slices.DeleteFunc(prs, func(pr *repo.PullRequest) bool {
 		mergedAt := pr.MergedAt
 		if since != nil && mergedAt != nil && mergedAt.Before((*since).Add(time.Second*time.Duration(s.Config.MinimalDelayInSeconds))) {

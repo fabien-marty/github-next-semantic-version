@@ -98,6 +98,12 @@ var commonCliFlags = []cli.Flag{
 		Usage:   "Cache Location (directory that must exist)",
 		EnvVars: []string{"GNSV_CACHE_LOCATION"},
 	},
+	&cli.BoolFlag{
+		Name:    "cache-dont-try-to-update",
+		Value:   false,
+		Usage:   "If set, don't try to update the cache (use it only if you know what you are doing)",
+		EnvVars: []string{"GNSV_CACHE_DONT_TYPE_TO_UPDATE"},
+	},
 }
 
 func addExtraCommonCliFlags(cliFlags []cli.Flag) []cli.Flag {
@@ -184,8 +190,9 @@ func getService(cCtx *cli.Context) (*app.Service, error) {
 	var repoAdapter repo.Port = repoGithubAdapter
 	if cCtx.Bool("cache") {
 		repoAdapter = repocache.NewAdapter(repoOwner, repoName, repoGithubAdapter, repocache.AdapterOptions{
-			CacheLocation: cCtx.String("cache-location"),
-			CacheLifetime: cCtx.Int("cache-lifetime"),
+			CacheLocation:        cCtx.String("cache-location"),
+			CacheLifetime:        cCtx.Int("cache-lifetime"),
+			CacheDontTryToUpdate: cCtx.Bool("cache-dont-try-to-update"),
 		})
 	}
 	appConfig := app.Config{
