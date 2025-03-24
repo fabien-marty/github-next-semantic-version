@@ -150,6 +150,27 @@ func sortPRByUpdatedAt(a, b *repo.PullRequest) int {
 	}
 }
 
+// GetPullRequests returns pull requests from the given base branch.
+// If onlyMerged is true, only merged PRs are returned.
+//
+// The method implements a caching strategy to avoid hitting the upstream API too often:
+//
+// 1. First, it tries to get PRs from the cache file
+// 2. If cache miss, it gets all PRs from upstream and saves them to cache
+// 3. If cache hit, it implements the following invalidation strategy:
+//   - Gets the first page of most recently updated PRs from upstream
+//   - If the least recently updated PR from that page matches a PR in cache
+//     with the same updatedAt timestamp, the cache is considered valid
+//   - Otherwise, the cache is invalidated and all PRs are fetched from upstream
+//
+// 4. When cache is valid, it merges:
+//   - The recently updated PRs from the first page
+//   - The older PRs from cache that weren't in the first page
+//
+// This allows keeping an up-to-date view of PRs while minimizing API calls.
+//
+// Note: why not using pagination on recently updated PRs?
+// => because the github api is full of bugs when you combine pagination and sorting
 func (r *Adapter) GetPullRequests(base string, onlyMerged bool) (res []*repo.PullRequest, err error) {
 	logger := slog.Default().With(slog.String("base", base), slog.Bool("onlyMerged", onlyMerged))
 	if !r.IsEnabled() {
