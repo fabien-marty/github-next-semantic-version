@@ -21,8 +21,9 @@ const cacheVersion = 1
 var _ repo.Port = &Adapter{}
 
 type AdapterOptions struct {
-	CacheLocation string
-	CacheLifetime int
+	CacheLocation        string
+	CacheLifetime        int
+	CacheDontTryToUpdate bool
 }
 
 type Adapter struct {
@@ -186,6 +187,9 @@ func (r *Adapter) GetPullRequests(base string, onlyMerged bool) (res []*repo.Pul
 		return res, err
 	}
 	// cache hit
+	if r.opts.CacheDontTryToUpdate {
+		return cachedPrs, nil
+	}
 	updatedPrs, err2 := r.GetLastUpdatedPullRequests(base, onlyMerged)
 	if err2 != nil {
 		return nil, err2
