@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [v0.10.0](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.10.0) (2025-03-24)
+
+#### Added
+
+- New cache system [\#51](https://github.com/fabien-marty/github-next-semantic-version/pull/51) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.9.3...v0.10.0)</sub>
+
 ## [v0.9.3](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.9.3) (2025-03-24)
 
 #### Fixed
