@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [v0.9.3](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.9.3) (2025-03-24)
+
+#### Fixed
+
+- fix bug about minimal delay with lightweight tags [\#58](https://github.com/fabien-marty/github-next-semantic-version/pull/58) ([fabien-marty](https://github.com/fabien-marty))
+
+#### Changed
+
+- update missing dep [\#56](https://github.com/fabien-marty/github-next-semantic-version/pull/56) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.9.2...v0.9.3)</sub>
+
 ## [v0.9.2](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.9.2) (2025-03-24)
 
 #### Changed
