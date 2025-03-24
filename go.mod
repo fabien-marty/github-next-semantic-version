@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/fabien-marty/slog-helpers v0.0.0-20240624063600-773d61849b89
-	github.com/google/go-github/v62 v62.0.0
+	github.com/google/go-github/v70 v70.0.0
 	github.com/stretchr/testify v1.9.0
 )
 
@@ -17,7 +17,6 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/fabien-marty/tracerr v0.0.0-20240624051446-7f090eca46ee // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
