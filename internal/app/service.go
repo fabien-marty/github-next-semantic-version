@@ -105,7 +105,7 @@ func (s *Service) getPullRequestsSingleBranch(branch string, since *time.Time, o
 	prs, err := s.RepoAdapter.GetPullRequestsSince(branch, onlyMerged)
 	prs = slices.DeleteFunc(prs, func(pr *repo.PullRequest) bool {
 		mergedAt := pr.MergedAt
-		if since != nil && mergedAt != nil && mergedAt.Before(*since) {
+		if since != nil && mergedAt != nil && mergedAt.Before((*since).Add(time.Second*time.Duration(s.Config.MinimalDelayInSeconds))) {
 			return true
 		}
 		if pr.IsIgnored(s.Config.PullRequestIgnoreLabels) {
