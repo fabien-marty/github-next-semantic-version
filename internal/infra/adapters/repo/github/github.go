@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/fabien-marty/github-next-semantic-version/internal/app/repo"
-	gh "github.com/google/go-github/v62/github"
+	gh "github.com/google/go-github/v70/github"
 )
 
 var _ repo.Port = &Adapter{}
