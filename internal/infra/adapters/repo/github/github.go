@@ -81,9 +81,10 @@ func (r *Adapter) getPullRequestsSince(state state, base string, sort string, us
 		listOptionsState = "closed"
 	}
 	listOptions := &gh.PullRequestListOptions{
-		State: listOptionsState,
-		Base:  base,
-		Sort:  sort,
+		State:     listOptionsState,
+		Base:      base,
+		Sort:      sort,
+		Direction: "desc", // we have to force this because the default depends on the sort value!!! (if Sort is "created" or not specified, Default is "desc", otherwise Default is "asc")
 		ListOptions: gh.ListOptions{
 			Page:    1,
 			PerPage: 100,
