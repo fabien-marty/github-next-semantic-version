@@ -111,13 +111,13 @@ func addExtraCommonCliFlags(cliFlags []cli.Flag) []cli.Flag {
 	copy(res, cliFlags)
 	res = append(res, &cli.StringFlag{
 		Name:    "major-labels",
-		Value:   "major,breaking,Type: Major",
+		Value:   "major,breaking,Type: Major,Type: Breaking",
 		Usage:   "Coma separated list of PR labels to consider as major (OR condition)",
 		EnvVars: []string{"GNSV_MAJOR_LABELS"},
 	})
 	res = append(res, &cli.StringFlag{
 		Name:    "minor-labels",
-		Value:   "feature,Type: Feature,Type: Minor",
+		Value:   "feature,Type: Feature,Type: Minor,Type: Added",
 		Usage:   "Coma separated list of PR labels to consider as minor (OR condition)",
 		EnvVars: []string{"GNSV_MINOR_LABELS"},
 	})
