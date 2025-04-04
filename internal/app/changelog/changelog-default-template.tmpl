@@ -1,6 +1,6 @@
 {{ $security := dict "title" "Security" "match" "one-of-these" "labels" (list "Type: Security" "security") }}
-{{- $added := dict "title" "Added" "match" "one-of-these" "labels" (list "Type: Feature" "feature") }}
-{{- $fixed := dict "title" "Fixed" "match" "one-of-these" "labels" (list "Type: Bug" "bug") }}
+{{- $added := dict "title" "Added" "match" "one-of-these" "labels" (list "Type: Feature" "feature" "Type: Added") }}
+{{- $fixed := dict "title" "Fixed" "match" "one-of-these" "labels" (list "Type: Bug" "bug" "Type: Fixed") }}
 {{- $deprecated := dict "title" "Deprecated" "match" "one-of-these" "labels" (list "Type: Deprecated" "deprecated") }}
 {{- $removed := dict "title" "Removed" "match" "one-of-these" "labels" (list "Type: Removed" "removed") }}
 {{- $tmpgroups := list $added $fixed $security $deprecated $removed }}
