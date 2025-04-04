@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [v0.10.3](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.10.3) (2025-04-04)
+
+#### Changed
+
+- Improve defaults arguments [\#65](https://github.com/fabien-marty/github-next-semantic-version/pull/65) ([fabien-marty](https://github.com/fabien-marty))
+
+<sub>[Full Diff](https://github.com/fabien-marty/github-next-semantic-version/compare/v0.10.2...v0.10.3)</sub>
+
 ## [v0.10.2](https://github.com/fabien-marty/github-next-semantic-version/tree/v0.10.2) (2025-03-25)
 
 #### Fixed
