@@ -31,7 +31,7 @@ jobs:
     outputs:
       tag: ${{ steps.output.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0 # we need this because fetch-tags=true and because of a GHA bug: https://github.com/actions/checkout/issues/1471
           fetch-tags: true
@@ -59,7 +59,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0 # we need this because fetch-tags=true and because of a GHA bug: https://github.com/actions/checkout/issues/1471
           fetch-tags: true
@@ -126,11 +126,11 @@ jobs:
           - goarch: arm64
             goos: windows
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Debug
         run: |
           echo "tag=${{ needs.release.outputs.tag }}"
-      - uses: wangyoucao577/go-release-action@v1
+      - uses: wangyoucao577/go-release-action@481a2c1a0f1be199722e3e9b74d7199acafc30a8 # v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
@@ -140,7 +140,7 @@ jobs:
           compress_assets: "OFF"
           pre_command: export CGO_ENABLED=0
           release_tag: ${{ needs.release.outputs.tag }}
-      - uses: wangyoucao577/go-release-action@v1
+      - uses: wangyoucao577/go-release-action@481a2c1a0f1be199722e3e9b74d7199acafc30a8 # v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
@@ -150,7 +150,7 @@ jobs:
           compress_assets: "OFF"
           pre_command: export CGO_ENABLED=0
           release_tag: ${{ needs.release.outputs.tag }}
-      - uses: wangyoucao577/go-release-action@v1
+      - uses: wangyoucao577/go-release-action@481a2c1a0f1be199722e3e9b74d7199acafc30a8 # v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
