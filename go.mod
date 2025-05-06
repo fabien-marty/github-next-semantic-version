@@ -9,6 +9,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/fabien-marty/slog-helpers v0.0.0-20240624063600-773d61849b89
 	github.com/google/go-github/v70 v70.0.0
+	github.com/google/go-github/v71 v71.0.0
 	github.com/stretchr/testify v1.10.0
 )
 
