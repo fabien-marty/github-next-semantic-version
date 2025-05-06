@@ -10,6 +10,7 @@ require (
 	github.com/fabien-marty/slog-helpers v0.0.0-20240624063600-773d61849b89
 	github.com/google/go-github/v70 v70.0.0
 	github.com/stretchr/testify v1.10.0
+	github.com/urfave/cli/v2 v2.27.6
 )
 
 require (
@@ -37,6 +38,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/relvacode/iso8601 v1.6.0
-	github.com/urfave/cli/v2 v2.27.6
+	github.com/urfave/cli/v3 v3.3.2
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
