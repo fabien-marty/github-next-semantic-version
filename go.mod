@@ -9,7 +9,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/fabien-marty/slog-helpers v0.0.0-20240624063600-773d61849b89
 	github.com/google/go-github/v70 v70.0.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.12.1
 )
 
 require (
@@ -29,6 +29,7 @@ require (
 	github.com/vlad-tokarev/sloggcp v0.0.0-20230820053939-1b7dbb8c7b58 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/ztrue/tracerr v0.4.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 )
