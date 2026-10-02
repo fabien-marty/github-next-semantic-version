@@ -9,13 +9,14 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/fabien-marty/slog-helpers v0.0.0-20240624063600-773d61849b89
 	github.com/google/go-github/v70 v70.0.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.12.1
+	github.com/urfave/cli/v2 v2.27.7
 )
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/fabien-marty/tracerr v0.0.0-20240624051446-7f090eca46ee // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -29,6 +30,7 @@ require (
 	github.com/vlad-tokarev/sloggcp v0.0.0-20230820053939-1b7dbb8c7b58 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/ztrue/tracerr v0.4.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 )
@@ -37,6 +39,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/relvacode/iso8601 v1.6.0
-	github.com/urfave/cli/v2 v2.27.6
+	github.com/urfave/cli/v3 v3.14.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
